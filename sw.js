@@ -1,11 +1,47 @@
+const CACHE_NAME = 'wc2026-v2';
+const ASSETS = [
+    './',
+    './index.html',
+    './app.js',
+    './manifest.json'
+];
 
-const CACHE_NAME = 'wc2026-v1';
-const ASSETS = ['./', './index.html', './style.css', './app.js'];
-
-self.addEventListener('install', (e) => {
-    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+// Install Event: Cache App Shell
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Caching App Shell');
+                return cache.addAll(ASSETS);
+            })
+            .then(() => self.skipWaiting())
+    );
 });
 
-self.addEventListener('fetch', (e) => {
-    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+// Activate Event: Clean up old caches
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(keys => {
+            return Promise.all(keys.map(key => {
+                if (key !== CACHE_NAME) {
+                    console.log('Removing old cache', key);
+                    return caches.delete(key);
+                }
+            }));
+        })
+    );
+});
+
+// Fetch Event: Serve from cache, fallback to network
+self.addEventListener('fetch', event => {
+    // Only cache GET requests, and don't try to cache the API calls 
+    // because we want live data from the API
+    if (event.request.method !== 'GET' || event.request.url.includes('api.football-data.org')) return;
+
+    event.respondWith(
+        caches.match(event.request)
+            .then(cachedResponse => {
+                return cachedResponse || fetch(event.request);
+            })
+    );
 });
