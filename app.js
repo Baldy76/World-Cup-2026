@@ -1,30 +1,28 @@
 const API_URL = 'https://wc2026-proxy.baldynapperrwe.workers.dev/'; 
 
-const TEAM_COLORS = {
-    'England': '#ef4444', 'Mexico': '#16a34a', 'USA': '#2563eb', 'Canada': '#dc2626',
-    'Brazil': '#eab308', 'Argentina': '#7dd3fc', 'France': '#1d4ed8', 'Germany': '#ffffff'
-};
-
 let globalMatches = [];
 let savedTeam = localStorage.getItem('myTeam') || 'ALL';
+let refreshInterval = parseInt(localStorage.getItem('refreshRate')) || 60000;
 
-// --- THEME ENGINE ---
-function updateTheme(teamName) {
-    const color = TEAM_COLORS[teamName] || '#10b981';
-    document.documentElement.style.setProperty('--primary-hex', color);
+// --- YOUR THEME BRAIN ---
+function applyTheme(isDark) {
+    document.body.classList.toggle('dark-mode', isDark);
+    const meta = document.getElementById('theme-meta'); 
+    if(meta) meta.content = isDark ? "#000000" : "#f2f2f7";
+    const btnL = document.getElementById('btnLight'), btnD = document.getElementById('btnDark');
+    if (btnL && btnD) {
+        btnL.classList.toggle('active', !isDark); btnD.classList.toggle('active', isDark);
+    }
 }
 
-// --- INIT ---
-document.getElementById('my-team-selector').addEventListener('change', (e) => {
-    savedTeam = e.target.value;
-    localStorage.setItem('myTeam', savedTeam);
-    updateTheme(savedTeam);
-    renderMatches();
-});
-updateTheme(savedTeam);
+window.setThemeMode = (isDark) => { 
+    applyTheme(isDark); 
+    localStorage.setItem('WC_Theme', isDark); 
+};
 
-// --- FETCH & DATA PIPELINE (Standard fetch code optimized) ---
+// --- DATA ENGINE ---
 async function fetchAllData() {
+    const indicator = document.getElementById('api-indicator');
     try {
         const [mR, gR, sR] = await Promise.all([
             fetch(`${API_URL}?endpoint=matches`),
@@ -35,101 +33,74 @@ async function fetchAllData() {
         const gD = await gR.json();
         const sD = await sR.json();
         globalMatches = mD.matches || [];
-        populateTeamSelector();
         renderMatches();
         renderStandings(gD.standings || []);
         renderScorers(sD.scorers || []);
-        startCountdown();
-        document.getElementById('status-message').classList.add('hidden');
-        setTimeout(fetchAllData, 30000); // More aggressive updates for live feel
-    } catch (e) { console.error(e); setTimeout(fetchAllData, 60000); }
+        indicator.className = "w-3 h-3 rounded-full bg-emerald-500 shadow-lg";
+    } catch (e) {
+        indicator.className = "w-3 h-3 rounded-full bg-red-500 shadow-lg";
+        console.error(e);
+    }
+    setTimeout(fetchAllData, refreshInterval);
 }
 
-// --- RENDER MATCHES (Glass Cards & Momentum) ---
+// --- SYSTEM CONTROLS ---
+window.nukeCache = () => {
+    if(confirm("Clear all data and reset app?")) {
+        localStorage.clear();
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+        window.location.reload();
+    }
+};
+
+document.getElementById('refresh-rate').addEventListener('change', (e) => {
+    localStorage.setItem('refreshRate', e.target.value);
+    refreshInterval = parseInt(e.target.value);
+});
+
+// --- RENDERERS (V5 Style) ---
 function renderMatches() {
     const container = document.getElementById('tab-matches');
     container.innerHTML = '';
-
     const list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
-
+    
     list.forEach((m, i) => {
         const isLive = m.status === 'IN_PLAY';
-        const scoreH = m.score?.fullTime?.home ?? 0;
-        const scoreA = m.score?.fullTime?.away ?? 0;
-
-        // Visual Momentum Mockup (calculated based on score/events)
-        const total = (scoreH + scoreA) || 1;
-        const widthH = Math.max(20, Math.min(80, (scoreH / total) * 100));
-
-        const card = `
-            <div onclick="toggleDetails(${i})" class="glass rounded-2xl p-5 shadow-2xl border-t border-white/10 relative overflow-hidden transition active:scale-95">
-                ${isLive ? '<div class="absolute top-0 left-0 w-full h-1 primary-bg animate-pulse"></div>' : ''}
-                
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex flex-col items-center w-1/3">
-                        <img src="${m.homeTeam?.crest}" class="w-10 h-10 object-contain mb-2 drop-shadow-md">
-                        <span class="text-[10px] font-black uppercase tracking-tighter">${m.homeTeam?.tla || 'TBD'}</span>
-                    </div>
-                    
-                    <div class="flex flex-col items-center w-1/3">
-                        <div class="text-3xl font-black italic tracking-tighter">${scoreH} - ${scoreA}</div>
-                        <div class="text-[10px] font-bold ${isLive ? 'text-red-500 animate-pulse' : 'text-slate-500'} uppercase">
-                            ${isLive ? 'LIVE '+m.minute+"'" : m.status}
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col items-center w-1/3">
-                        <img src="${m.awayTeam?.crest}" class="w-10 h-10 object-contain mb-2 drop-shadow-md">
-                        <span class="text-[10px] font-black uppercase tracking-tighter">${m.awayTeam?.tla || 'TBD'}</span>
-                    </div>
+        container.insertAdjacentHTML('beforeend', `
+            <div onclick="toggleDetails(${i})" class="glass p-5 rounded-2xl shadow-md border-l-4 ${isLive ? 'border-red-500' : 'border-emerald-500'} active:scale-95 transition">
+                <div class="flex justify-between text-[10px] font-bold opacity-40 mb-3 uppercase tracking-widest">
+                    <span>${new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                    <span class="${isLive ? 'text-red-500 animate-pulse' : ''}">${isLive ? 'LIVE' : m.status}</span>
                 </div>
-
-                <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden flex">
-                    <div class="primary-bg transition-all duration-1000" style="width: ${widthH}%"></div>
-                    <div class="bg-slate-600 w-full"></div>
+                <div class="flex justify-between items-center text-lg font-black italic tracking-tighter">
+                    <div class="flex-1 flex items-center justify-end truncate pr-2">${m.homeTeam?.tla || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-5 h-5 ml-2 object-contain"></div>
+                    <div class="px-3 py-1 bg-black/5 rounded-lg">${m.score?.fullTime?.home ?? 0} - ${m.score?.fullTime?.away ?? 0}</div>
+                    <div class="flex-1 flex items-center justify-start truncate pl-2"><img src="${m.awayTeam?.crest}" class="w-5 h-5 mr-2 object-contain"> ${m.awayTeam?.tla || 'TBD'}</div>
                 </div>
-
-                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-white/5 space-y-2">
-                    ${(m.goals || []).map(g => `<div class="text-[10px] flex justify-between"><span>⚽ ${g.scorer.name}</span> <span class="opacity-50">${g.minute}'</span></div>`).join('')}
-                    <div class="text-[9px] uppercase font-bold opacity-30 text-center mt-2">${m.venue || 'Stadium TBD'}</div>
+                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-black/5 text-[10px] text-center opacity-60">
+                    ${m.venue || 'Stadium TBD'} | ${m.group || m.stage}
                 </div>
             </div>
-        `;
-        container.insertAdjacentHTML('beforeend', card);
+        `);
     });
 }
 
-// ... (Rest of logic: Standings, Scorers, Countdown, switchTab - same as V4 but applying the .glass classes) ...
 function toggleDetails(i) { document.getElementById(`details-${i}`).classList.toggle('hidden'); }
 
 function switchTab(t) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${t}`).classList.add('active');
-    ['matches', 'groups', 'stats'].forEach(id => {
+    ['matches', 'groups', 'stats', 'settings'].forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
-        btn.classList.remove('primary-text');
-        btn.classList.add('text-slate-500');
+        btn.classList.toggle('primary-text', id === t);
+        btn.classList.toggle('opacity-40', id !== t);
     });
-    document.getElementById(`btn-${t}`).classList.remove('text-slate-500');
-    document.getElementById(`btn-${t}`).classList.add('primary-text');
 }
 
-function startCountdown() {
-    const next = globalMatches.find(m => m.status === 'TIMED');
-    if(!next) return;
-    const diff = new Date(next.utcDate) - new Date();
-    if(diff < 0) return;
-    const h = Math.floor(diff/3600000);
-    const m = Math.floor((diff%3600000)/60000);
-    document.getElementById('countdown-banner').classList.remove('hidden');
-    document.getElementById('countdown-timer').innerText = `${next.homeTeam.name} vs ${next.awayTeam.name} | ${h}H ${m}M`;
-}
-
-function populateTeamSelector() {
-    const s = document.getElementById('my-team-selector');
-    const teams = [...new Set(globalMatches.map(m => [m.homeTeam.name, m.awayTeam.name]).flat())].filter(Boolean).sort();
-    s.innerHTML = '<option value="ALL">Global View</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
-    s.value = savedTeam;
-}
-
-fetchAllData();
+// Kickoff
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('WC_Theme') === 'true';
+    applyTheme(saved);
+    document.getElementById('refresh-rate').value = refreshInterval;
+    fetchAllData();
+});
