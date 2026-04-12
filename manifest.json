@@ -1,11 +1,11 @@
 {
-  "name": "World Cup 2026 Tracker",
+  "name": "World Cup 2026 Elite",
   "short_name": "WC 2026",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#1e293b",
-  "description": "Live self-updating scores and fixtures for the 2026 World Cup",
+  "background_color": "#f2f2f7",
+  "theme_color": "#10b981",
+  "description": "Live self-updating scores and stats for the 2026 World Cup",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/53/53283.png",
