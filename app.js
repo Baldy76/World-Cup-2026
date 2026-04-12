@@ -1,6 +1,12 @@
 // --- CONFIGURATION ---
 const API_KEY = '94316a379a82410f87c8b65e9b1795bb'; 
-const API_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+
+// The actual API URL
+const TARGET_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
+
+// We wrap the URL in a CORS proxy to bypass the browser block on github.io
+const API_URL = 'https://corsproxy.io/?' + encodeURIComponent(TARGET_URL);
+
 let fetchTimerId;
 
 // --- PWA SETUP ---
@@ -42,8 +48,14 @@ async function fetchMatches() {
         
         // 4. Parse and Render Data
         const data = await response.json();
-        renderMatches(data.matches, container);
-        statusMsg.classList.add('hidden');
+        
+        // Safety check to ensure data.matches exists
+        if (data && data.matches) {
+            renderMatches(data.matches, container);
+            statusMsg.classList.add('hidden');
+        } else {
+             throw new Error("Invalid data structure received");
+        }
 
         // 5. Smart Throttling for next fetch
         let nextFetchDelay = 60000; // Default: 1 minute
@@ -74,6 +86,11 @@ function scheduleNextFetch(delayMs) {
 function renderMatches(matches, container) {
     container.innerHTML = ''; // Clear old data
 
+    if (matches.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-400">No matches found for this tournament yet.</div>';
+        return;
+    }
+
     matches.forEach(match => {
         const statusColors = {
             'TIMED': 'text-slate-400',
@@ -85,6 +102,10 @@ function renderMatches(matches, container) {
         const statusText = match.status === 'IN_PLAY' ? 'LIVE' : match.status;
         const colorClass = statusColors[match.status] || 'text-slate-400';
 
+        // Optional chaining (?.) prevents crashes if score data is missing
+        const homeScore = match.score?.fullTime?.home ?? '-';
+        const awayScore = match.score?.fullTime?.away ?? '-';
+
         const matchCard = `
             <div class="bg-slate-800 p-4 rounded-xl shadow-lg border-l-4 ${match.status === 'IN_PLAY' ? 'border-red-500' : 'border-emerald-500'} flex flex-col">
                 <div class="flex justify-between text-xs mb-3">
@@ -92,11 +113,11 @@ function renderMatches(matches, container) {
                     <span class="${colorClass}">${statusText}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold">
-                    <div class="flex-1 text-right truncate pr-2">${match.homeTeam.name || 'TBD'}</div>
+                    <div class="flex-1 text-right truncate pr-2">${match.homeTeam?.name || 'TBD'}</div>
                     <div class="px-3 text-xl bg-slate-900 rounded mx-1 py-1 font-mono">
-                        ${match.score.fullTime.home ?? '-'} : ${match.score.fullTime.away ?? '-'}
+                        ${homeScore} : ${awayScore}
                     </div>
-                    <div class="flex-1 text-left truncate pl-2">${match.awayTeam.name || 'TBD'}</div>
+                    <div class="flex-1 text-left truncate pl-2">${match.awayTeam?.name || 'TBD'}</div>
                 </div>
             </div>
         `;
