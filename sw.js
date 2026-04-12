@@ -36,7 +36,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     // Only cache GET requests, and don't try to cache the API calls 
     // because we want live data from the API
-    if (event.request.method !== 'GET' || event.request.url.includes('api.football-data.org')) return;
+    if (event.request.method !== 'GET' || event.request.url.includes('api.football-data.org') || event.request.url.includes('corsproxy.io')) return;
 
     event.respondWith(
         caches.match(event.request)
