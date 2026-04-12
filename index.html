@@ -3,24 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World Cup 2026 Tracker</title>
+    <title>World Cup 2026</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e293b">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth scrolling and pull-to-refresh feel */
+        body { overscroll-behavior-y: contain; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
 </head>
-<body class="bg-slate-900 text-white font-sans p-4">
-    <header class="text-center mb-6 mt-4">
-        <h1 class="text-3xl font-bold text-emerald-400">WC 2026 Live</h1>
-        <p class="text-slate-400 text-sm mt-1">Self-Updating Match Tracker</p>
+<body class="bg-slate-900 text-white font-sans pb-20">
+    
+    <header class="bg-slate-800 p-4 sticky top-0 z-10 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold text-emerald-400">WC 2026</h1>
+        
+        <select id="my-team-selector" class="bg-slate-700 text-sm text-white rounded p-1 border border-slate-600 outline-none">
+            <option value="ALL">All Teams</option>
+            </select>
     </header>
 
-    <main>
+    <main class="p-4">
         <div id="status-message" class="text-center text-slate-400 animate-pulse mb-4 text-sm font-semibold">
-            Fetching latest matches...
+            Syncing data...
         </div>
-        <div id="match-container" class="space-y-4 max-w-md mx-auto">
+
+        <div id="tab-matches" class="tab-content active space-y-4 max-w-md mx-auto">
+            </div>
+
+        <div id="tab-groups" class="tab-content space-y-6 max-w-md mx-auto">
             </div>
     </main>
+
+    <nav class="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around p-3 pb-safe z-10">
+        <button onclick="switchTab('matches')" id="btn-matches" class="flex flex-col items-center text-emerald-400 w-1/2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="text-xs mt-1">Matches</span>
+        </button>
+        <button onclick="switchTab('groups')" id="btn-groups" class="flex flex-col items-center text-slate-400 w-1/2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            <span class="text-xs mt-1">Groups</span>
+        </button>
+    </nav>
 
     <script src="app.js"></script>
 </body>
