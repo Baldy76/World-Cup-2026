@@ -1,8 +1,9 @@
-const API_URL = 'https://wc2026-proxy.baldynapperrwe.workers.dev'; // Removed trailing slash for cleaner param appending
+const API_URL = 'https://wc2026-proxy.baldynapperrwe.workers.dev'; 
 
 let globalMatches = [];
 let savedTeam = localStorage.getItem('myTeam') || 'ALL';
 let refreshInterval = parseInt(localStorage.getItem('refreshRate')) || 60000;
+let fetchTimeout;
 
 // --- THEME ENGINE ---
 function applyTheme(isDark) {
@@ -20,11 +21,12 @@ window.setThemeMode = (isDark) => {
     localStorage.setItem('WC_Theme', isDark); 
 };
 
-// --- IMPROVED DATA ENGINE ---
+// --- DATA ENGINE ---
 async function fetchAllData() {
+    clearTimeout(fetchTimeout);
     const indicator = document.getElementById('api-indicator');
+    
     try {
-        // We fetch with explicit endpoint params
         const [mR, gR, sR] = await Promise.all([
             fetch(`${API_URL}?endpoint=matches`),
             fetch(`${API_URL}?endpoint=standings`),
@@ -35,26 +37,41 @@ async function fetchAllData() {
         const gD = await gR.json();
         const sD = await sR.json();
 
-        console.log("Matches:", mD); // Log to console for debugging
-        console.log("Groups:", gD);
-
         globalMatches = mD.matches || [];
         
         renderMatches();
         renderStandings(gD.standings || []);
         renderScorers(sD.scorers || []);
+        populateTeamSelector();
 
         indicator.className = "w-3 h-3 rounded-full bg-emerald-500 shadow-lg";
-        populateTeamSelector();
     } catch (e) {
         indicator.className = "w-3 h-3 rounded-full bg-red-500 shadow-lg";
         console.error("Fetch Error:", e);
     }
-    setTimeout(fetchAllData, refreshInterval);
+    
+    fetchTimeout = setTimeout(fetchAllData, refreshInterval);
 }
 
-// --- RENDERING LOGIC ---
+// --- MANUAL SYNC ---
+window.manualSync = async () => {
+    const btn = document.getElementById('sync-btn');
+    const icon = document.getElementById('sync-icon');
+    
+    icon.classList.add('animate-spin');
+    btn.classList.add('opacity-50');
+    btn.disabled = true;
 
+    await fetchAllData();
+
+    setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        btn.classList.remove('opacity-50');
+        btn.disabled = false;
+    }, 800);
+};
+
+// --- RENDERING ---
 function renderMatches() {
     const container = document.getElementById('tab-matches');
     const list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
@@ -73,11 +90,17 @@ function renderMatches() {
                     <span class="${isLive ? 'text-red-500 animate-pulse' : ''}">${isLive ? 'LIVE' : m.status}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-black italic tracking-tighter">
-                    <div class="flex-1 flex items-center justify-end truncate pr-2">${m.homeTeam?.tla || m.homeTeam?.name || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-5 h-5 ml-2 object-contain"></div>
-                    <div class="px-3 py-1 bg-black/5 rounded-lg">${m.score?.fullTime?.home ?? 0} - ${m.score?.fullTime?.away ?? 0}</div>
-                    <div class="flex-1 flex items-center justify-start truncate pl-2"><img src="${m.awayTeam?.crest}" class="w-5 h-5 mr-2 object-contain"> ${m.awayTeam?.tla || m.awayTeam?.name || 'TBD'}</div>
+                    <div class="flex-1 flex items-center justify-end truncate pr-2 text-right">
+                        ${m.homeTeam?.tla || m.homeTeam?.name || 'TBD'} 
+                        <img src="${m.homeTeam?.crest}" class="w-5 h-5 ml-2 object-contain inline">
+                    </div>
+                    <div class="px-3 py-1 bg-black/5 rounded-lg font-mono">${m.score?.fullTime?.home ?? 0} - ${m.score?.fullTime?.away ?? 0}</div>
+                    <div class="flex-1 flex items-center justify-start truncate pl-2 text-left">
+                        <img src="${m.awayTeam?.crest}" class="w-5 h-5 mr-2 object-contain inline"> 
+                        ${m.awayTeam?.tla || m.awayTeam?.name || 'TBD'}
+                    </div>
                 </div>
-                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-black/5 text-[10px] text-center opacity-60">
+                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-black/5 text-[10px] text-center opacity-60 uppercase font-bold tracking-widest">
                     ${m.venue || 'Stadium TBD'} | ${m.group || m.stage || 'World Cup 2026'}
                 </div>
             </div>
@@ -87,7 +110,7 @@ function renderMatches() {
 
 function renderStandings(standings) {
     const container = document.getElementById('tab-groups');
-    if (standings.length === 0) {
+    if (!standings || standings.length === 0) {
         container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold uppercase tracking-widest text-xs">Standings will appear here<br>once the tournament begins.</div>`;
         return;
     }
@@ -105,7 +128,7 @@ function renderStandings(standings) {
                         </div>
                         <div class="flex gap-4 font-mono opacity-80">
                             <span>${team.playedGames}P</span>
-                            <span class="font-bold primary-text">${team.points}pts</span>
+                            <span class="font-bold text-emerald-500">${team.points}pts</span>
                         </div>
                     </div>
                 `).join('')}
@@ -130,13 +153,13 @@ function renderScorers(scorers) {
                     <span class="font-bold text-sm">${s.player.name}</span>
                     <img src="${s.team.crest}" class="w-4 h-4 object-contain">
                 </div>
-                <span class="font-black primary-text">${s.goals} ⚽</span>
+                <span class="font-black text-emerald-500">${s.goals} ⚽</span>
             </div>
         `).join('')}
     </div>`;
 }
 
-// --- SYSTEM HELPERS ---
+// --- UTILS ---
 window.nukeCache = () => {
     if(confirm("Clear all data and reset app?")) {
         localStorage.clear();
@@ -166,9 +189,13 @@ function populateTeamSelector() {
     const current = s.value;
     s.innerHTML = '<option value="ALL">Global View</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
     s.value = current;
+    s.onchange = (e) => {
+        savedTeam = e.target.value;
+        localStorage.setItem('myTeam', savedTeam);
+        renderMatches();
+    };
 }
 
-// Kickoff
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('WC_Theme') === 'true';
     applyTheme(saved);
