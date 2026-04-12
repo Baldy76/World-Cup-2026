@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wc2026-v4'; // <-- Changed to v4 to bust cache
+const CACHE_NAME = 'wc2026-v6.5';
 const ASSETS = [
     './',
     './index.html',
