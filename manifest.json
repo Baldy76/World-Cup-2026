@@ -1,1 +1,18 @@
 
+{
+  "name": "World Cup 2026 Tracker",
+  "short_name": "WC 2026",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "description": "Live self-updating scores and fixtures for the 2026 World Cup",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/World_Cup_2026_logo.png/512px-World_Cup_2026_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
