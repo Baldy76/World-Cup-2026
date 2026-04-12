@@ -1,1 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup 2026 Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans p-4">
+    <header class="text-center mb-6 mt-4">
+        <h1 class="text-3xl font-bold text-emerald-400">WC 2026 Live</h1>
+        <p class="text-slate-400 text-sm mt-1">Self-Updating Match Tracker</p>
+    </header>
 
+    <main>
+        <div id="status-message" class="text-center text-slate-400 animate-pulse mb-4 text-sm font-semibold">
+            Fetching latest matches...
+        </div>
+        <div id="match-container" class="space-y-4 max-w-md mx-auto">
+            </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
