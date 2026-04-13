@@ -67,8 +67,6 @@ async function fetchAllData() {
         
         checkGoalAlerts(globalMatches);
         evalPredictions(); 
-        
-        // Fetch League Board if user is in a league
         if(myLeagueId) fetchLeagueTable();
 
         renderMatches();
@@ -111,7 +109,7 @@ function checkGoalAlerts(matches) {
     });
 }
 
-// --- MULTIPLAYER PREDICTOR ENGINE ---
+// --- NEW 5/2/DOUBLE MULTIPLAYER PREDICTOR ENGINE ---
 window.savePrediction = (matchId, homeTeam, awayTeam) => {
     triggerHaptic('success');
     const hScore = document.getElementById(`pred-h-${matchId}`).value;
@@ -119,7 +117,14 @@ window.savePrediction = (matchId, homeTeam, awayTeam) => {
     
     if(hScore === "" || aScore === "") return alert("Enter both scores!");
 
-    predictions[matchId] = { h: parseInt(hScore), a: parseInt(aScore), hName: homeTeam, aName: awayTeam, points: null };
+    predictions[matchId] = { 
+        h: parseInt(hScore), 
+        a: parseInt(aScore), 
+        hName: homeTeam, 
+        aName: awayTeam, 
+        basePoints: null, 
+        points: null 
+    };
     localStorage.setItem('wc_predictions', JSON.stringify(predictions));
     
     const btn = document.getElementById(`btn-save-${matchId}`);
@@ -132,6 +137,16 @@ function evalPredictions() {
     let ptsCounter = 0;
     let pointsChanged = false;
 
+    // Build tracking map to know which matches belong to which group
+    const groupTracker = {};
+    globalMatches.forEach(m => {
+        if (m.stage === 'GROUP_STAGE' && m.group) {
+            if (!groupTracker[m.group]) groupTracker[m.group] = [];
+            groupTracker[m.group].push(m);
+        }
+    });
+
+    // Step 1: Calculate BASE POINTS (5 for exact, 2 for outcome)
     for (let id in predictions) {
         const match = globalMatches.find(m => m.id == id);
         if (match && match.status === 'FINISHED') {
@@ -141,40 +156,74 @@ function evalPredictions() {
             const predA = predictions[id].a;
 
             let pts = 0;
-            if (actualH === predH && actualA === predA) pts = 3; 
-            else {
+            if (actualH === predH && actualA === predA) {
+                pts = 5; // Exact Score
+            } else {
                 const actualDiff = actualH - actualA;
                 const predDiff = predH - predA;
-                if ((actualDiff > 0 && predDiff > 0) || (actualDiff < 0 && predDiff < 0) || (actualDiff === 0 && predDiff === 0)) pts = 1;
+                if ((actualDiff > 0 && predDiff > 0) || (actualDiff < 0 && predDiff < 0) || (actualDiff === 0 && predDiff === 0)) {
+                    pts = 2; // Right Result
+                }
             }
             
-            if(predictions[id].points !== pts) {
-                predictions[id].points = pts;
+            if (predictions[id].basePoints !== pts) {
+                predictions[id].basePoints = pts;
                 pointsChanged = true;
             }
         }
-        if (predictions[id].points !== null) ptsCounter += predictions[id].points;
+    }
+
+    // Step 2: Apply the "Perfect Group" Multiplier
+    for (let id in predictions) {
+        const match = globalMatches.find(m => m.id == id);
+        let finalPts = predictions[id].basePoints;
+
+        if (finalPts !== null && finalPts !== undefined && match && match.stage === 'GROUP_STAGE' && match.group) {
+            const groupMatches = groupTracker[match.group];
+            if (groupMatches) {
+                // Is the entire group finished?
+                const allFinished = groupMatches.every(m => m.status === 'FINISHED');
+                if (allFinished) {
+                    // Did the user get EXACT (5pts) for every match in the group?
+                    const perfectSweep = groupMatches.every(m => predictions[m.id] && predictions[m.id].basePoints === 5);
+                    
+                    if (perfectSweep) {
+                        finalPts *= 2; // DOUBLE POINTS!
+                    }
+                }
+            }
+        }
+
+        if (predictions[id].points !== finalPts) {
+            predictions[id].points = finalPts;
+            pointsChanged = true;
+        }
+
+        if (predictions[id].points !== null && predictions[id].points !== undefined) {
+            ptsCounter += predictions[id].points;
+        }
     }
     
     localStorage.setItem('wc_predictions', JSON.stringify(predictions));
     
     if (ptsCounter !== currentTotalPoints || pointsChanged) {
         currentTotalPoints = ptsCounter;
-        document.getElementById('predict-points').innerText = currentTotalPoints;
-        syncPointsToCloud(); // Send new score to Cloudflare!
+        const ptEl = document.getElementById('predict-points');
+        if(ptEl) ptEl.innerText = currentTotalPoints;
+        syncPointsToCloud(); 
     }
 }
 
 // --- CLOUDFLARE KV SYNC ---
 async function syncPointsToCloud() {
-    if (!myUsername || !myLeagueId) return; // Not in a league
+    if (!myUsername || !myLeagueId) return; 
     try {
         await fetch(`${API_URL}?endpoint=league&leagueId=${myLeagueId}`, {
             method: 'POST',
             body: JSON.stringify({ username: myUsername, points: currentTotalPoints }),
             headers: { 'Content-Type': 'application/json' }
         });
-        fetchLeagueTable(); // Refresh board immediately
+        fetchLeagueTable(); 
     } catch(e) { console.error("Cloud Sync Failed", e); }
 }
 
@@ -183,19 +232,13 @@ async function fetchLeagueTable() {
     try {
         const res = await fetch(`${API_URL}?endpoint=league&leagueId=${myLeagueId}`);
         const data = await res.json();
-        
         const container = document.getElementById('league-rankings');
-        if (data.length === 0) {
-            container.innerHTML = `<div class="p-6 text-center opacity-40 text-xs font-bold uppercase tracking-widest">You are the first one here!</div>`;
-            return;
-        }
+        if (data.length === 0) return container.innerHTML = `<div class="p-6 text-center opacity-40 text-xs font-bold uppercase tracking-widest">You are the first one here!</div>`;
 
         container.innerHTML = data.map((player, index) => {
             const isMe = player.username === myUsername;
             let medal = `<span class="opacity-30 text-xs font-black w-6 text-center">${index + 1}</span>`;
-            if(index === 0) medal = `🥇`;
-            if(index === 1) medal = `🥈`;
-            if(index === 2) medal = `🥉`;
+            if(index === 0) medal = `🥇`; if(index === 1) medal = `🥈`; if(index === 2) medal = `🥉`;
 
             return `
                 <div class="flex justify-between items-center p-4 border-b border-black/5 last:border-0 ${isMe ? 'bg-emerald-500/10' : ''}">
@@ -214,11 +257,9 @@ window.joinLeague = () => {
     triggerHaptic('heavy');
     const user = document.getElementById('setup-username').value.trim();
     const lId = document.getElementById('setup-league-id').value.trim().toLowerCase().replace(/\s+/g, '-');
-    
     if(!user || !lId) return alert("Enter both a Name and a League ID!");
     
-    myUsername = user;
-    myLeagueId = lId;
+    myUsername = user; myLeagueId = lId;
     localStorage.setItem('wc_username', myUsername);
     localStorage.setItem('wc_leagueId', myLeagueId);
     
@@ -230,8 +271,7 @@ window.joinLeague = () => {
 window.leaveLeague = () => {
     if(confirm("Leave this league? Your points will remain, but you won't see the leaderboard.")) {
         myUsername = ''; myLeagueId = '';
-        localStorage.removeItem('wc_username');
-        localStorage.removeItem('wc_leagueId');
+        localStorage.removeItem('wc_username'); localStorage.removeItem('wc_leagueId');
         renderLeagueUI();
     }
 };
@@ -239,15 +279,12 @@ window.leaveLeague = () => {
 function renderLeagueUI() {
     const setupEl = document.getElementById('league-setup');
     const boardEl = document.getElementById('league-board');
-    
     if (myUsername && myLeagueId) {
-        setupEl.classList.add('hidden');
-        boardEl.classList.remove('hidden');
+        setupEl.classList.add('hidden'); boardEl.classList.remove('hidden');
         document.getElementById('display-league-id').innerText = myLeagueId;
         fetchLeagueTable();
     } else {
-        setupEl.classList.remove('hidden');
-        boardEl.classList.add('hidden');
+        setupEl.classList.remove('hidden'); boardEl.classList.add('hidden');
     }
 }
 
@@ -308,14 +345,21 @@ function renderPredictor() {
     
     container.innerHTML = html;
 
-    const past = Object.keys(predictions).filter(id => predictions[id].points !== null);
+    // Display History with dynamic colors based on the new 5/2 logic
+    const past = Object.keys(predictions).filter(id => predictions[id].points !== null && predictions[id].points !== undefined);
     if(past.length > 0) {
         container.insertAdjacentHTML('beforeend', `<h3 class="font-black text-sm uppercase opacity-50 mb-2 mt-6 px-2">History</h3>`);
         past.forEach(id => {
             const p = predictions[id];
-            const color = p.points === 3 ? 'emerald' : p.points === 1 ? 'blue' : 'slate';
+            // Green if 5+ (meaning exact or doubled), Blue if 2+, Grey if 0
+            const color = p.points >= 5 ? 'emerald' : p.points >= 2 ? 'blue' : 'slate';
+            const bonusTag = (p.points > p.basePoints) ? `<span class="bg-emerald-500 text-white text-[8px] px-1 rounded ml-1">x2</span>` : '';
+            
             container.insertAdjacentHTML('beforeend', `
-                <div class="flex justify-between items-center glass p-3 rounded-xl mb-2 border-l-4 border-${color}-500"><span class="text-xs font-bold w-1/2 truncate">${p.hName} ${p.h}-${p.a} ${p.aName}</span><span class="text-[10px] font-black text-${color}-500 uppercase tracking-widest">+${p.points} Pts</span></div>
+                <div class="flex justify-between items-center glass p-3 rounded-xl mb-2 border-l-4 border-${color}-500">
+                    <span class="text-xs font-bold w-1/2 truncate">${p.hName} ${p.h}-${p.a} ${p.aName}</span>
+                    <span class="text-[10px] font-black text-${color}-500 uppercase tracking-widest">+${p.points} Pts ${bonusTag}</span>
+                </div>
             `);
         });
     }
