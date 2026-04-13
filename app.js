@@ -7,7 +7,7 @@ let fetchTimeout;
 let previousScores = {}; 
 let predictions = JSON.parse(localStorage.getItem('wc_predictions')) || {};
 
-// --- SENSORY UI ENGINE (Epic 2) ---
+// --- SENSORY UI ENGINE ---
 function triggerHaptic(type = 'light') {
     if (!navigator.vibrate) return;
     if (type === 'light') navigator.vibrate(50);
@@ -28,7 +28,6 @@ function playGoalSound() {
             osc.start(ctx.currentTime + time);
             osc.stop(ctx.currentTime + time + dur);
         };
-        // A simple stadium alert beep-beep!
         playTone(659.25, 0, 0.15); // E5
         playTone(880.00, 0.2, 0.4); // A5
     } catch(e) { console.log("Audio not supported"); }
@@ -65,12 +64,12 @@ async function fetchAllData() {
         globalMatches = mD.matches || [];
         
         checkGoalAlerts(globalMatches);
-        evalPredictions(); // Grade the game!
+        evalPredictions(); 
 
         renderMatches();
         renderPredictor();
         renderStandings(gD.standings || []);
-        renderBracket(); // Epic 4
+        renderBracket(); 
         renderScorers(sD.scorers || []);
         populateTeamSelector();
 
@@ -82,7 +81,7 @@ async function fetchAllData() {
     fetchTimeout = setTimeout(fetchAllData, refreshInterval);
 }
 
-// --- GOAL ALERT LOGIC (Sensory Update) ---
+// --- GOAL ALERTS ---
 function checkGoalAlerts(matches) {
     matches.forEach(match => {
         if (match.status === 'IN_PLAY') {
@@ -109,7 +108,7 @@ function checkGoalAlerts(matches) {
     });
 }
 
-// --- PREDICTOR ENGINE (Epic 1) ---
+// --- PREDICTOR ENGINE ---
 function savePrediction(matchId, homeTeam, awayTeam) {
     triggerHaptic('success');
     const hScore = document.getElementById(`pred-h-${matchId}`).value;
@@ -122,15 +121,14 @@ function savePrediction(matchId, homeTeam, awayTeam) {
         a: parseInt(aScore),
         hName: homeTeam,
         aName: awayTeam,
-        points: null // To be graded later
+        points: null 
     };
     localStorage.setItem('wc_predictions', JSON.stringify(predictions));
     
-    // Quick UI feedback
     const btn = document.getElementById(`btn-save-${matchId}`);
     btn.innerHTML = "Saved! ✔️";
     btn.classList.replace('text-blue-500', 'text-emerald-500');
-    setTimeout(() => evalPredictions(), 500); // Regrade immediately
+    setTimeout(() => evalPredictions(), 500); 
 }
 
 function evalPredictions() {
@@ -145,9 +143,8 @@ function evalPredictions() {
             const predA = predictions[id].a;
 
             let pts = 0;
-            if (actualH === predH && actualA === predA) pts = 3; // Exact
+            if (actualH === predH && actualA === predA) pts = 3; 
             else {
-                // Correct outcome (Win/Loss/Draw)
                 const actualDiff = actualH - actualA;
                 const predDiff = predH - predA;
                 if ((actualDiff > 0 && predDiff > 0) || (actualDiff < 0 && predDiff < 0) || (actualDiff === 0 && predDiff === 0)) {
@@ -168,7 +165,7 @@ function renderPredictor() {
     const container = document.getElementById('predict-container');
     container.innerHTML = '';
 
-    const upcoming = globalMatches.filter(m => m.status === 'TIMED' || m.status === 'SCHEDULED').slice(0, 5); // Show next 5 games
+    const upcoming = globalMatches.filter(m => m.status === 'TIMED' || m.status === 'SCHEDULED').slice(0, 5);
     
     if (upcoming.length === 0) {
         container.innerHTML = `<div class="glass p-5 rounded-2xl text-center opacity-40 font-bold text-xs uppercase">No upcoming matches to predict.</div>`;
@@ -204,7 +201,6 @@ function renderPredictor() {
         `);
     });
 
-    // Render Past Results inside Predictor tab
     const past = Object.keys(predictions).filter(id => predictions[id].points !== null);
     if(past.length > 0) {
         container.insertAdjacentHTML('beforeend', `<h3 class="font-black text-sm uppercase opacity-50 mb-2 mt-6 px-2">History</h3>`);
@@ -221,7 +217,7 @@ function renderPredictor() {
     }
 }
 
-// --- KNOCKOUT BRACKET (Epic 4) ---
+// --- KNOCKOUT BRACKET ---
 function renderBracket() {
     const container = document.getElementById('sub-bracket');
     const knockouts = globalMatches.filter(m => m.stage !== 'GROUP_STAGE' && m.stage !== null);
@@ -231,7 +227,6 @@ function renderBracket() {
         return;
     }
 
-    // Group by stage
     const stages = { 'LAST_32':[], 'LAST_16':[], 'QUARTER_FINALS':[], 'SEMI_FINALS':[], 'FINAL':[] };
     knockouts.forEach(m => { if(stages[m.stage]) stages[m.stage].push(m); });
 
@@ -267,7 +262,7 @@ function renderBracket() {
     container.innerHTML = html;
 }
 
-// --- STANDARD RENDERERS (Matches, Standings, Scorers) ---
+// --- MATCHES & STANDINGS ---
 function renderMatches() {
     const container = document.getElementById('tab-matches');
     const list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
@@ -348,16 +343,47 @@ function renderScorers(scorers) {
     </div>`;
 }
 
-// --- NAVIGATION & UTILS ---
-window.nukeCache = () => {
-    triggerHaptic();
-    if(confirm("Clear all data and reset app?")) {
-        localStorage.clear();
-        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-        window.location.reload();
+// --- SYSTEM BUTTONS ---
+window.updatePWA = () => {
+    triggerHaptic('heavy');
+    const btn = document.getElementById('update-btn');
+    const icon = document.getElementById('update-icon');
+    icon.classList.add('animate-spin'); btn.classList.add('opacity-50'); btn.disabled = true;
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg) {
+                reg.update().then(() => {
+                    setTimeout(() => window.location.reload(true), 500);
+                });
+            } else {
+                window.location.reload(true);
+            }
+        });
+    } else {
+        window.location.reload(true);
     }
 };
 
+window.manualSync = async () => {
+    triggerHaptic('heavy');
+    const btn = document.getElementById('sync-btn');
+    const icon = document.getElementById('sync-icon');
+    icon.classList.add('animate-spin'); btn.classList.add('opacity-50'); btn.disabled = true;
+    await fetchAllData();
+    setTimeout(() => { icon.classList.remove('animate-spin'); btn.classList.remove('opacity-50'); btn.disabled = false; }, 800);
+};
+
+window.nukeCache = () => {
+    triggerHaptic('heavy');
+    if(confirm("Clear all data and reset app?")) {
+        localStorage.clear();
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+        window.location.reload(true);
+    }
+};
+
+// --- NAVIGATION & UI HELPERS ---
 function switchTab(t) {
     triggerHaptic('light');
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -383,15 +409,6 @@ function toggleDetails(i) {
     if(el) el.classList.toggle('hidden'); 
 }
 
-window.manualSync = async () => {
-    triggerHaptic('heavy');
-    const btn = document.getElementById('sync-btn');
-    const icon = document.getElementById('sync-icon');
-    icon.classList.add('animate-spin'); btn.classList.add('opacity-50'); btn.disabled = true;
-    await fetchAllData();
-    setTimeout(() => { icon.classList.remove('animate-spin'); btn.classList.remove('opacity-50'); btn.disabled = false; }, 800);
-};
-
 function populateTeamSelector() {
     const s = document.getElementById('my-team-selector');
     const teams = [...new Set(globalMatches.map(m => [m.homeTeam?.name, m.awayTeam?.name]).flat())].filter(Boolean).sort();
@@ -399,21 +416,14 @@ function populateTeamSelector() {
     s.innerHTML = '<option value="ALL">Global View</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
     s.value = current;
     s.onchange = (e) => {
-        triggerHaptic();
+        triggerHaptic('light');
         savedTeam = e.target.value;
         localStorage.setItem('myTeam', savedTeam);
         renderMatches();
     };
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    setupNotificationButton(); // Keep from V7
-    const saved = localStorage.getItem('WC_Theme') === 'true';
-    applyTheme(saved);
-    fetchAllData();
-});
-
-// Polyfill from V7 setup
+// SETUP NOTIFICATIONS (V7 Logic)
 function setupNotificationButton() {
     if (!("Notification" in window) || Notification.permission === "granted" || document.getElementById('notify-btn-container')) return;
     const settingsTab = document.getElementById('tab-settings');
@@ -421,3 +431,10 @@ function setupNotificationButton() {
         settingsTab.insertAdjacentHTML('afterbegin', `<button id="notify-btn-container" onclick="Notification.requestPermission().then(()=>window.location.reload())" class="w-full py-4 mb-4 bg-blue-500/10 text-blue-500 rounded-xl text-xs font-black uppercase tracking-widest">🔔 Enable Goal Alerts</button>`);
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupNotificationButton(); 
+    const saved = localStorage.getItem('WC_Theme') === 'true';
+    applyTheme(saved);
+    fetchAllData();
+});
