@@ -64,13 +64,49 @@
         </div>
 
         <div id="tab-predict" class="tab-content space-y-4">
-            <div class="glass p-6 rounded-2xl shadow-md text-center mb-6">
-                <h2 class="text-xs font-black uppercase opacity-50 tracking-widest mb-1">Your Trophy Room</h2>
-                <div class="text-5xl font-black primary-text mb-2"><span id="predict-points">0</span> <span class="text-xl">pts</span></div>
-                <p class="text-[10px] font-bold opacity-50 uppercase">3pts Exact Score | 1pt Correct Winner</p>
+            <div class="theme-segmented-control mb-6">
+                <button id="btnSubPicks" class="segment active" onclick="switchPredictTab('picks')">My Picks</button>
+                <button id="btnSubLeague" class="segment" onclick="switchPredictTab('league')">League</button>
             </div>
-            <h3 class="font-black text-sm uppercase opacity-50 mb-2 px-2">Make Predictions</h3>
-            <div id="predict-container" class="space-y-4"></div>
+
+            <div id="sub-picks" class="space-y-4">
+                <div class="glass p-6 rounded-2xl shadow-md text-center mb-6">
+                    <h2 class="text-xs font-black uppercase opacity-50 tracking-widest mb-1">Your Total Points</h2>
+                    <div class="text-5xl font-black primary-text mb-2"><span id="predict-points">0</span></div>
+                    <p class="text-[10px] font-bold opacity-50 uppercase">3pts Exact Score | 1pt Correct Winner</p>
+                </div>
+                <h3 class="font-black text-sm uppercase opacity-50 mb-2 px-2">Upcoming Matches</h3>
+                <div id="predict-container" class="space-y-4"></div>
+            </div>
+
+            <div id="sub-league" class="hidden space-y-4">
+                
+                <div id="league-setup" class="glass p-6 rounded-2xl shadow-md text-center">
+                    <h2 class="text-lg font-black primary-text mb-2">Join a League</h2>
+                    <p class="text-xs opacity-60 mb-6 font-bold">Compete against your friends!</p>
+                    
+                    <input id="setup-username" type="text" placeholder="Your Display Name" class="w-full bg-black/5 rounded-xl p-4 mb-4 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 border border-black/5 placeholder:opacity-50 text-center">
+                    <input id="setup-league-id" type="text" placeholder="Secret League ID (e.g. boys-26)" class="w-full bg-black/5 rounded-xl p-4 mb-6 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 border border-black/5 placeholder:opacity-50 text-center lowercase">
+                    
+                    <button onclick="joinLeague()" class="w-full py-4 bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-widest active:scale-95 transition shadow-lg shadow-emerald-500/30">
+                        Join / Create League
+                    </button>
+                </div>
+
+                <div id="league-board" class="hidden">
+                    <div class="flex justify-between items-end mb-4 px-2 border-b border-black/10 pb-2">
+                        <div>
+                            <h2 class="text-lg font-black primary-text leading-tight">Leaderboard</h2>
+                            <p class="text-[10px] font-bold opacity-50 uppercase tracking-widest">League: <span id="display-league-id" class="primary-text"></span></p>
+                        </div>
+                        <button onclick="leaveLeague()" class="text-[10px] text-red-500 font-bold uppercase tracking-widest opacity-80 hover:opacity-100">Leave</button>
+                    </div>
+                    
+                    <div id="league-rankings" class="glass rounded-2xl shadow-md overflow-hidden">
+                        </div>
+                </div>
+
+            </div>
         </div>
 
         <div id="tab-stats" class="tab-content space-y-4"></div>
@@ -119,7 +155,7 @@
             </div>
 
             <div class="text-center text-[10px] opacity-30 font-bold uppercase tracking-widest">
-                World Cup 2026 PWA v8.1.0
+                World Cup 2026 PWA v9.0.0
             </div>
         </div>
     </main>
