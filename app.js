@@ -5,6 +5,9 @@ let savedTeam = localStorage.getItem('myTeam') || 'ALL';
 let refreshInterval = parseInt(localStorage.getItem('refreshRate')) || 60000;
 let fetchTimeout;
 
+// NEW: Memory bank for Goal Detection
+let previousScores = {}; 
+
 // --- THEME ENGINE ---
 function applyTheme(isDark) {
     document.body.classList.toggle('dark-mode', isDark);
@@ -39,6 +42,9 @@ async function fetchAllData() {
 
         globalMatches = mD.matches || [];
         
+        // NEW: Check for goals before rendering
+        checkGoalAlerts(globalMatches);
+
         renderMatches();
         renderStandings(gD.standings || []);
         renderScorers(sD.scorers || []);
@@ -52,6 +58,81 @@ async function fetchAllData() {
     
     fetchTimeout = setTimeout(fetchAllData, refreshInterval);
 }
+
+// --- GOAL ALERT LOGIC ---
+function checkGoalAlerts(matches) {
+    // Check if notifications are allowed by the iPhone
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    matches.forEach(match => {
+        // Only track matches that are currently live
+        if (match.status === 'IN_PLAY') {
+            
+            // Filter: Only alert for selected team (or all if Global)
+            if (savedTeam !== 'ALL' && match.homeTeam?.name !== savedTeam && match.awayTeam?.name !== savedTeam) return;
+
+            const matchId = match.id;
+            const currentHomeScore = match.score?.fullTime?.home ?? 0;
+            const currentAwayScore = match.score?.fullTime?.away ?? 0;
+
+            const prev = previousScores[matchId];
+
+            // If we have previous memory AND a score has gone up
+            if (prev && (currentHomeScore > prev.home || currentAwayScore > prev.away)) {
+                
+                // Identify who scored
+                const scoringTeam = currentHomeScore > prev.home ? match.homeTeam : match.awayTeam;
+                
+                // Try to find the latest goalscorer in the API data
+                let scorerName = "Unknown Player";
+                let minute = "";
+                if (match.goals && match.goals.length > 0) {
+                    const latestGoal = match.goals[match.goals.length - 1];
+                    scorerName = latestGoal.scorer?.name || "Unknown Player";
+                    minute = latestGoal.minute ? `${latestGoal.minute}'` : "";
+                }
+
+                // Fire the iPhone Notification!
+                const title = `⚽ GOAL ${scoringTeam.tla || scoringTeam.name}!`;
+                const body = `${scorerName} ${minute}\n${match.homeTeam.tla} ${currentHomeScore} - ${currentAwayScore} ${match.awayTeam.tla}`;
+                
+                new Notification(title, {
+                    body: body,
+                    icon: scoringTeam.crest || 'https://cdn-icons-png.flaticon.com/512/53/53283.png',
+                    vibrate: [200, 100, 200] // Makes Androids buzz
+                });
+            }
+
+            // Update memory for the next 60-second check
+            previousScores[matchId] = { home: currentHomeScore, away: currentAwayScore };
+        }
+    });
+}
+
+// --- PERMISSION REQUEST UI ---
+// We need to ask the user for permission. Let's hijack the API Indicator area in Settings for a button if they haven't granted it.
+function setupNotificationButton() {
+    if ("Notification" in window && Notification.permission === "default") {
+        const settingsTab = document.getElementById('tab-settings');
+        if(settingsTab) {
+            const btnHtml = `
+                <button onclick="requestPushPermissions()" class="w-full py-3 mb-4 bg-blue-500/10 text-blue-500 rounded-xl text-sm font-black uppercase tracking-widest active:scale-95 transition">
+                    🔔 Enable Goal Alerts
+                </button>
+            `;
+            settingsTab.insertAdjacentHTML('afterbegin', btnHtml);
+        }
+    }
+}
+
+window.requestPushPermissions = () => {
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            alert("Goal alerts enabled! Keep the app open (or running in the background) to receive them.");
+            window.location.reload();
+        }
+    });
+};
 
 // --- MANUAL SYNC ---
 window.manualSync = async () => {
@@ -199,5 +280,6 @@ function populateTeamSelector() {
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('WC_Theme') === 'true';
     applyTheme(saved);
+    setupNotificationButton();
     fetchAllData();
 });
