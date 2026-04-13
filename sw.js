@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wc2026-v9.1';
+const CACHE_NAME = 'wc2026-v9.2';
 const ASSETS = [
     './',
     './index.html',
@@ -18,9 +18,7 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => Promise.all(
             keys.map(key => { 
-                if (key !== CACHE_NAME) {
-                    return caches.delete(key); 
-                } 
+                if (key !== CACHE_NAME) return caches.delete(key); 
             })
         ))
     );
