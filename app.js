@@ -28,8 +28,8 @@ function playGoalSound() {
             osc.start(ctx.currentTime + time);
             osc.stop(ctx.currentTime + time + dur);
         };
-        playTone(659.25, 0, 0.15); // E5
-        playTone(880.00, 0.2, 0.4); // A5
+        playTone(659.25, 0, 0.15); 
+        playTone(880.00, 0.2, 0.4); 
     } catch(e) { console.log("Audio not supported"); }
 }
 
@@ -108,7 +108,7 @@ function checkGoalAlerts(matches) {
     });
 }
 
-// --- PREDICTOR ENGINE ---
+// --- PREDICTOR ENGINE (Now with Date Banners!) ---
 function savePrediction(matchId, homeTeam, awayTeam) {
     triggerHaptic('success');
     const hScore = document.getElementById(`pred-h-${matchId}`).value;
@@ -165,20 +165,38 @@ function renderPredictor() {
     const container = document.getElementById('predict-container');
     container.innerHTML = '';
 
-    const upcoming = globalMatches.filter(m => m.status === 'TIMED' || m.status === 'SCHEDULED').slice(0, 5);
+    let upcoming = globalMatches.filter(m => m.status === 'TIMED' || m.status === 'SCHEDULED');
+    
+    // Sort chronologically
+    upcoming.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+    upcoming = upcoming.slice(0, 5); // Just show the next 5 to prevent overload
     
     if (upcoming.length === 0) {
         container.innerHTML = `<div class="glass p-5 rounded-2xl text-center opacity-40 font-bold text-xs uppercase">No upcoming matches to predict.</div>`;
     }
 
+    let currentGroupDate = "";
+    let html = "";
+
     upcoming.forEach(m => {
+        const matchDate = new Date(m.utcDate);
+        const dateString = matchDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const timeString = matchDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+        if (dateString !== currentGroupDate) {
+            html += `<div class="w-full bg-black/5 rounded-xl py-2 mt-4 mb-3 text-center text-[10px] font-black uppercase tracking-widest opacity-60 backdrop-blur-sm border border-black/5">${dateString}</div>`;
+            currentGroupDate = dateString;
+        }
+
         const pred = predictions[m.id];
         const hVal = pred ? pred.h : '';
         const aVal = pred ? pred.a : '';
 
-        container.insertAdjacentHTML('beforeend', `
-            <div class="glass p-4 rounded-2xl shadow-md border border-black/5">
-                <div class="text-[10px] uppercase font-bold opacity-40 mb-2 tracking-widest text-center">${new Date(m.utcDate).toLocaleString([], {weekday:'short', hour:'2-digit', minute:'2-digit'})}</div>
+        html += `
+            <div class="glass p-4 rounded-2xl shadow-md border border-black/5 mb-4">
+                <div class="text-[10px] uppercase font-bold opacity-50 mb-3 tracking-widest text-center">
+                    ${timeString} • ${m.venue || 'Stadium TBD'}
+                </div>
                 <div class="flex items-center justify-between">
                     <div class="flex flex-col items-center w-1/3">
                         <img src="${m.homeTeam?.crest}" class="w-6 h-6 mb-1 object-contain">
@@ -198,9 +216,12 @@ function renderPredictor() {
                     ${pred ? 'Update Prediction' : 'Save Prediction'}
                 </button>
             </div>
-        `);
+        `;
     });
+    
+    container.innerHTML = html;
 
+    // Render Past Results History
     const past = Object.keys(predictions).filter(id => predictions[id].points !== null);
     if(past.length > 0) {
         container.insertAdjacentHTML('beforeend', `<h3 class="font-black text-sm uppercase opacity-50 mb-2 mt-6 px-2">History</h3>`);
@@ -215,6 +236,62 @@ function renderPredictor() {
             `);
         });
     }
+}
+
+// --- MATCHES RENDERING (Now with Date Banners & Visible Stadiums) ---
+function renderMatches() {
+    const container = document.getElementById('tab-matches');
+    let list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
+    
+    if (list.length === 0) {
+        container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold uppercase text-[10px]">No matches found.</div>`;
+        return;
+    }
+
+    // Always ensure chronological order
+    list.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+
+    let currentGroupDate = "";
+    let html = "";
+
+    list.forEach((m, i) => {
+        const isLive = m.status === 'IN_PLAY';
+        const matchDate = new Date(m.utcDate);
+        
+        // Formats into: "Tuesday, July 2, 2026"
+        const dateString = matchDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        // Formats into: "20:00"
+        const timeString = matchDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+        // If the date changes, drop a new banner
+        if (dateString !== currentGroupDate) {
+            html += `<div class="w-full bg-black/5 rounded-xl py-2 mt-6 mb-3 text-center text-[10px] font-black uppercase tracking-widest opacity-60 backdrop-blur-sm border border-black/5 shadow-sm">${dateString}</div>`;
+            currentGroupDate = dateString;
+        }
+
+        html += `
+            <div onclick="toggleDetails(${i})" class="glass p-5 rounded-2xl shadow-md border-l-4 ${isLive ? 'border-red-500' : 'border-emerald-500'} active:scale-95 transition mb-4">
+                <div class="flex justify-between text-[10px] font-bold opacity-50 mb-3 uppercase tracking-widest">
+                    <span class="truncate pr-2">${timeString} • ${m.venue || 'Stadium TBD'}</span>
+                    <span class="${isLive ? 'text-red-500 animate-pulse font-black' : ''}">${isLive ? 'LIVE' : m.status}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-black italic tracking-tighter">
+                    <div class="flex-1 flex items-center justify-end truncate pr-2 text-right">
+                        ${m.homeTeam?.tla || m.homeTeam?.name || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-5 h-5 ml-2 object-contain inline">
+                    </div>
+                    <div class="px-3 py-1 bg-black/5 rounded-lg font-mono">${m.score?.fullTime?.home ?? 0} - ${m.score?.fullTime?.away ?? 0}</div>
+                    <div class="flex-1 flex items-center justify-start truncate pl-2 text-left">
+                        <img src="${m.awayTeam?.crest}" class="w-5 h-5 mr-2 object-contain inline"> ${m.awayTeam?.tla || m.awayTeam?.name || 'TBD'}
+                    </div>
+                </div>
+                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-black/5 text-[10px] text-center opacity-60 uppercase font-bold tracking-widest">
+                    ${m.stage?.replace('_', ' ') || 'World Cup 2026'} ${m.group ? `- ${m.group}` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 // --- KNOCKOUT BRACKET ---
@@ -262,41 +339,7 @@ function renderBracket() {
     container.innerHTML = html;
 }
 
-// --- MATCHES & STANDINGS ---
-function renderMatches() {
-    const container = document.getElementById('tab-matches');
-    const list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
-    
-    if (list.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold uppercase text-[10px]">No matches found.</div>`;
-        return;
-    }
-
-    container.innerHTML = list.map((m, i) => {
-        const isLive = m.status === 'IN_PLAY';
-        return `
-            <div onclick="toggleDetails(${i})" class="glass p-5 rounded-2xl shadow-md border-l-4 ${isLive ? 'border-red-500' : 'border-emerald-500'} active:scale-95 transition mb-4">
-                <div class="flex justify-between text-[10px] font-bold opacity-40 mb-3 uppercase tracking-widest">
-                    <span>${new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                    <span class="${isLive ? 'text-red-500 animate-pulse' : ''}">${isLive ? 'LIVE' : m.status}</span>
-                </div>
-                <div class="flex justify-between items-center text-lg font-black italic tracking-tighter">
-                    <div class="flex-1 flex items-center justify-end truncate pr-2 text-right">
-                        ${m.homeTeam?.tla || m.homeTeam?.name || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-5 h-5 ml-2 object-contain inline">
-                    </div>
-                    <div class="px-3 py-1 bg-black/5 rounded-lg font-mono">${m.score?.fullTime?.home ?? 0} - ${m.score?.fullTime?.away ?? 0}</div>
-                    <div class="flex-1 flex items-center justify-start truncate pl-2 text-left">
-                        <img src="${m.awayTeam?.crest}" class="w-5 h-5 mr-2 object-contain inline"> ${m.awayTeam?.tla || m.awayTeam?.name || 'TBD'}
-                    </div>
-                </div>
-                <div id="details-${i}" class="hidden mt-4 pt-4 border-t border-black/5 text-[10px] text-center opacity-60 uppercase font-bold tracking-widest">
-                    ${m.venue || 'Stadium TBD'} | ${m.group || m.stage || 'WC 2026'}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
+// --- STANDINGS & SCORERS ---
 function renderStandings(standings) {
     const container = document.getElementById('sub-groups');
     if (!standings || standings.length === 0) return container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold uppercase tracking-widest text-[10px]">Standings not available yet.</div>`;
@@ -353,16 +396,10 @@ window.updatePWA = () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then(reg => {
             if (reg) {
-                reg.update().then(() => {
-                    setTimeout(() => window.location.reload(true), 500);
-                });
-            } else {
-                window.location.reload(true);
-            }
+                reg.update().then(() => setTimeout(() => window.location.reload(true), 500));
+            } else window.location.reload(true);
         });
-    } else {
-        window.location.reload(true);
-    }
+    } else window.location.reload(true);
 };
 
 window.manualSync = async () => {
@@ -423,7 +460,7 @@ function populateTeamSelector() {
     };
 }
 
-// SETUP NOTIFICATIONS (V7 Logic)
+// SETUP NOTIFICATIONS
 function setupNotificationButton() {
     if (!("Notification" in window) || Notification.permission === "granted" || document.getElementById('notify-btn-container')) return;
     const settingsTab = document.getElementById('tab-settings');
