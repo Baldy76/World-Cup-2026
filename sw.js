@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wc2026-v6.5';
+const CACHE_NAME = 'wc2026-v8.1';
 const ASSETS = [
     './',
     './index.html',
@@ -17,7 +17,12 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => Promise.all(
-            keys.map(key => { if (key !== CACHE_NAME) return caches.delete(key); })
+            keys.map(key => { 
+                if (key !== CACHE_NAME) {
+                    console.log('Deleting old cache:', key);
+                    return caches.delete(key); 
+                } 
+            })
         ))
     );
 });
