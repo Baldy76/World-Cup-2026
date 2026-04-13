@@ -4,8 +4,6 @@ let globalMatches = [];
 let savedTeam = localStorage.getItem('myTeam') || 'ALL';
 let refreshInterval = parseInt(localStorage.getItem('refreshRate')) || 60000;
 let fetchTimeout;
-
-// NEW: Memory bank for Goal Detection
 let previousScores = {}; 
 
 // --- THEME ENGINE ---
@@ -42,7 +40,6 @@ async function fetchAllData() {
 
         globalMatches = mD.matches || [];
         
-        // NEW: Check for goals before rendering
         checkGoalAlerts(globalMatches);
 
         renderMatches();
@@ -61,14 +58,10 @@ async function fetchAllData() {
 
 // --- GOAL ALERT LOGIC ---
 function checkGoalAlerts(matches) {
-    // Check if notifications are allowed by the iPhone
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     matches.forEach(match => {
-        // Only track matches that are currently live
         if (match.status === 'IN_PLAY') {
-            
-            // Filter: Only alert for selected team (or all if Global)
             if (savedTeam !== 'ALL' && match.homeTeam?.name !== savedTeam && match.awayTeam?.name !== savedTeam) return;
 
             const matchId = match.id;
@@ -77,58 +70,71 @@ function checkGoalAlerts(matches) {
 
             const prev = previousScores[matchId];
 
-            // If we have previous memory AND a score has gone up
             if (prev && (currentHomeScore > prev.home || currentAwayScore > prev.away)) {
-                
-                // Identify who scored
                 const scoringTeam = currentHomeScore > prev.home ? match.homeTeam : match.awayTeam;
                 
-                // Try to find the latest goalscorer in the API data
-                let scorerName = "Unknown Player";
+                let scorerName = "Goal!";
                 let minute = "";
                 if (match.goals && match.goals.length > 0) {
                     const latestGoal = match.goals[match.goals.length - 1];
-                    scorerName = latestGoal.scorer?.name || "Unknown Player";
+                    scorerName = latestGoal.scorer?.name || "Goal!";
                     minute = latestGoal.minute ? `${latestGoal.minute}'` : "";
                 }
 
-                // Fire the iPhone Notification!
-                const title = `⚽ GOAL ${scoringTeam.tla || scoringTeam.name}!`;
+                const title = `⚽ ${scoringTeam.tla || scoringTeam.name} SCORES!`;
                 const body = `${scorerName} ${minute}\n${match.homeTeam.tla} ${currentHomeScore} - ${currentAwayScore} ${match.awayTeam.tla}`;
                 
                 new Notification(title, {
                     body: body,
                     icon: scoringTeam.crest || 'https://cdn-icons-png.flaticon.com/512/53/53283.png',
-                    vibrate: [200, 100, 200] // Makes Androids buzz
+                    vibrate: [200, 100, 200]
                 });
             }
 
-            // Update memory for the next 60-second check
             previousScores[matchId] = { home: currentHomeScore, away: currentAwayScore };
         }
     });
 }
 
-// --- PERMISSION REQUEST UI ---
-// We need to ask the user for permission. Let's hijack the API Indicator area in Settings for a button if they haven't granted it.
+// --- PERMISSION REQUEST UI (IMPROVED) ---
 function setupNotificationButton() {
-    if ("Notification" in window && Notification.permission === "default") {
-        const settingsTab = document.getElementById('tab-settings');
-        if(settingsTab) {
-            const btnHtml = `
-                <button onclick="requestPushPermissions()" class="w-full py-3 mb-4 bg-blue-500/10 text-blue-500 rounded-xl text-sm font-black uppercase tracking-widest active:scale-95 transition">
-                    🔔 Enable Goal Alerts
-                </button>
-            `;
-            settingsTab.insertAdjacentHTML('afterbegin', btnHtml);
-        }
+    const settingsTab = document.getElementById('tab-settings');
+    if(!settingsTab) return;
+    
+    // Prevent rendering multiple times
+    if(document.getElementById('notify-btn-container')) return;
+
+    let btnHtml = '';
+
+    if (!("Notification" in window)) {
+        btnHtml = `<div id="notify-btn-container" class="w-full py-3 mb-4 mt-6 bg-slate-500/10 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest text-center border border-slate-500/20">Notifications Unsupported<br><span class="text-[9px] opacity-70">Add App to Home Screen First</span></div>`;
+    } else if (Notification.permission === "granted") {
+        btnHtml = `<div id="notify-btn-container" class="w-full py-3 mb-4 mt-6 bg-emerald-500/10 text-emerald-500 rounded-xl text-sm font-black uppercase tracking-widest text-center border border-emerald-500/20">🔔 Goal Alerts Active</div>`;
+    } else if (Notification.permission === "denied") {
+        btnHtml = `<div id="notify-btn-container" class="w-full py-3 mb-4 mt-6 bg-red-500/10 text-red-500 rounded-xl text-sm font-black uppercase tracking-widest text-center border border-red-500/20">🔕 Alerts Blocked in OS</div>`;
+    } else {
+        btnHtml = `
+            <button id="notify-btn-container" onclick="requestPushPermissions()" class="w-full py-4 mt-6 mb-4 bg-blue-500/10 text-blue-500 rounded-xl text-sm font-black uppercase tracking-widest active:scale-95 transition border border-blue-500/20">
+                🔔 Enable Goal Alerts
+            </button>
+        `;
+    }
+
+    // Insert the button right below the Appearance box
+    const appearanceBox = settingsTab.querySelector('.glass');
+    if(appearanceBox) {
+        appearanceBox.insertAdjacentHTML('afterend', btnHtml);
     }
 }
 
 window.requestPushPermissions = () => {
     Notification.requestPermission().then(permission => {
+        setupNotificationButton(); // Re-render the button based on new permission
         if (permission === "granted") {
-            alert("Goal alerts enabled! Keep the app open (or running in the background) to receive them.");
+            alert("Goal alerts enabled! Keep the app open to receive them.");
+            window.location.reload();
+        } else {
+            alert("Permission denied. You can change this in your OS settings.");
             window.location.reload();
         }
     });
