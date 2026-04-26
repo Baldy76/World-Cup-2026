@@ -4,7 +4,6 @@ const ESPN_STANDINGS_URL = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa
 
 // --- COMPLETE GROUP STAGE UK TV BROADCAST GUIDE ---
 const UK_TV_GUIDE = {
-    // Matchday 1
     "Mexico-South Africa": "ITV", "South Korea-Play-off D": "ITV", "Canada-Play-off A": "BBC",
     "USA-Paraguay": "BBC", "Qatar-Switzerland": "ITV", "Brazil-Morocco": "BBC",
     "Australia-Play-off C": "ITV", "Scotland-Haiti": "BBC", "Germany-Curacao": "ITV",
@@ -12,28 +11,23 @@ const UK_TV_GUIDE = {
     "Spain-Cape Verde": "ITV", "Belgium-Egypt": "BBC", "Saudi Arabia-Uruguay": "ITV",
     "Iran-New Zealand": "BBC", "France-Senegal": "BBC", "Play-off 2-Norway": "BBC",
     "Argentina-Algeria": "ITV", "Austria-Jordan": "BBC", "Portugal-Play-off 1": "BBC",
-    "England-Croatia": "ITV", "Ghana-Panama": "ITV",
-
-    // Matchday 2
-    "Uzbekistan-Colombia": "BBC", "South Africa-Play-off D": "BBC", "Play-off A-Switzerland": "ITV",
-    "Canada-Qatar": "ITV", "Mexico-South Korea": "BBC", "USA-Australia": "BBC",
-    "Scotland-Morocco": "ITV", "Paraguay-Play-off C": "ITV", "Brazil-Haiti": "ITV",
-    "Netherlands-Play-off B": "BBC", "Germany-Ivory Coast": "ITV", "Japan-Tunisia": "BBC",
-    "Curacao-Ecuador": "BBC", "Spain-Saudi Arabia": "BBC", "Belgium-Iran": "ITV",
-    "Cape Verde-Uruguay": "BBC", "Egypt-New Zealand": "ITV", "Argentina-Austria": "BBC",
-    "France-Play-off 2": "BBC", "Senegal-Norway": "ITV", "Algeria-Jordan": "ITV",
-    "Portugal-Uzbekistan": "ITV", "England-Ghana": "BBC", "Croatia-Panama": "BBC",
-
-    // Matchday 3
-    "Colombia-Play-off 1": "ITV", "Canada-Switzerland": "ITV", "Play-off A-Qatar": "ITV",
-    "Scotland-Brazil": "BBC", "Morocco-Haiti": "BBC", "Mexico-Play-off D": "BBC",
-    "South Africa-South Korea": "BBC", "Germany-Ecuador": "BBC", "Curacao-Ivory Coast": "BBC",
-    "USA-Play-off C": "ITV", "Paraguay-Australia": "ITV", "Japan-Play-off B": "BBC",
-    "Netherlands-Tunisia": "BBC", "France-Norway": "ITV", "Senegal-Play-off 2": "ITV",
-    "Cape Verde-Saudi Arabia": "ITV", "Uruguay-Spain": "ITV", "Egypt-Iran": "BBC",
-    "New Zealand-Belgium": "BBC", "England-Panama": "ITV", "Croatia-Ghana": "ITV",
-    "Algeria-Austria": "BBC", "Argentina-Jordan": "BBC", "Colombia-Portugal": "BBC",
-    "Play-off 1-Uzbekistan": "BBC"
+    "England-Croatia": "ITV", "Ghana-Panama": "ITV", "Uzbekistan-Colombia": "BBC", 
+    "South Africa-Play-off D": "BBC", "Play-off A-Switzerland": "ITV", "Canada-Qatar": "ITV", 
+    "Mexico-South Korea": "BBC", "USA-Australia": "BBC", "Scotland-Morocco": "ITV", 
+    "Paraguay-Play-off C": "ITV", "Brazil-Haiti": "ITV", "Netherlands-Play-off B": "BBC", 
+    "Germany-Ivory Coast": "ITV", "Japan-Tunisia": "BBC", "Curacao-Ecuador": "BBC", 
+    "Spain-Saudi Arabia": "BBC", "Belgium-Iran": "ITV", "Cape Verde-Uruguay": "BBC", 
+    "Egypt-New Zealand": "ITV", "Argentina-Austria": "BBC", "France-Play-off 2": "BBC", 
+    "Senegal-Norway": "ITV", "Algeria-Jordan": "ITV", "Portugal-Uzbekistan": "ITV", 
+    "England-Ghana": "BBC", "Croatia-Panama": "BBC", "Colombia-Play-off 1": "ITV", 
+    "Canada-Switzerland": "ITV", "Play-off A-Qatar": "ITV", "Scotland-Brazil": "BBC", 
+    "Morocco-Haiti": "BBC", "Mexico-Play-off D": "BBC", "South Africa-South Korea": "BBC", 
+    "Germany-Ecuador": "BBC", "Curacao-Ivory Coast": "BBC", "USA-Play-off C": "ITV", 
+    "Paraguay-Australia": "ITV", "Japan-Play-off B": "BBC", "Netherlands-Tunisia": "BBC", 
+    "France-Norway": "ITV", "Senegal-Play-off 2": "ITV", "Cape Verde-Saudi Arabia": "ITV", 
+    "Uruguay-Spain": "ITV", "Egypt-Iran": "BBC", "New Zealand-Belgium": "BBC", 
+    "England-Panama": "ITV", "Croatia-Ghana": "ITV", "Algeria-Austria": "BBC", 
+    "Argentina-Jordan": "BBC", "Colombia-Portugal": "BBC", "Play-off 1-Uzbekistan": "BBC"
 };
 
 let globalMatches = [];
@@ -193,6 +187,7 @@ async function fetchLeagueTable() {
 window.toggleDateGroup = (dateId) => { triggerHaptic('light'); document.getElementById(`header-${dateId}`).classList.toggle('open'); document.getElementById(`drawer-${dateId}`).classList.toggle('open'); };
 function getTvBadge(h, a) { const channel = UK_TV_GUIDE[`${h}-${a}`] || UK_TV_GUIDE[`${a}-${h}`]; if (!channel) return ''; const style = channel === "BBC" ? "bg-black text-white" : "bg-blue-900 text-cyan-300 border-cyan-300/30"; return `<span class="${style} px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest ml-2 border border-white/10 shadow-sm">${channel}</span>`; }
 
+// --- RENDER MATCHES (V12.2 Typo Fix - Added pl-2 to left container) ---
 function renderMatches() {
     const container = document.getElementById('tab-matches');
     let list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
@@ -217,7 +212,7 @@ function renderMatches() {
                             <div onclick="toggleDetails(${i})" class="glass p-6 rounded-3xl shadow-lg border-l-4 ${isLive ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border-transparent'} active:scale-95 transition">
                                 <div class="flex justify-between items-center mb-4"><span class="stage-tag shadow-sm">${stageDisplay}</span><div class="flex items-center gap-2">${tv}<span class="text-[10px] font-black opacity-60 uppercase tracking-widest">${tStr}</span></div></div>
                                 <div class="flex justify-between items-center text-2xl font-black italic tracking-tighter">
-                                    <div class="flex-1 flex items-center justify-end truncate pr-2 text-right drop-shadow-md">${m.homeTeam?.tla || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-6 h-6 ml-3 object-contain inline drop-shadow-md"></div>
+                                    <div class="flex-1 flex items-center justify-end truncate pl-2 pr-2 text-right drop-shadow-md">${m.homeTeam?.tla || 'TBD'} <img src="${m.homeTeam?.crest}" class="w-6 h-6 ml-3 object-contain inline drop-shadow-md"></div>
                                     <div class="px-4 py-2 bg-white/20 rounded-xl font-mono shadow-inner backdrop-blur-sm border border-white/10">${m.score.fullTime.home ?? 0} - ${m.score.fullTime.away ?? 0}</div>
                                     <div class="flex-1 flex items-center justify-start truncate pl-2 text-left drop-shadow-md"><img src="${m.awayTeam?.crest}" class="w-6 h-6 mr-3 object-contain inline drop-shadow-md"> ${m.awayTeam?.tla || 'TBD'}</div>
                                 </div>
@@ -251,22 +246,22 @@ function renderPredictor() {
         const dStr = new Date(m.utcDate).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
         if (dStr !== cD) { html += `<div class="text-[10px] font-black uppercase tracking-widest opacity-60 mt-6 mb-3 text-center">${dStr}</div>`; cD = dStr; }
         const p = predictions[m.id];
-        html += `<div class="glass p-6 rounded-3xl shadow-lg border border-white/10 mb-5"><div class="flex justify-between items-center mb-4"><span class="stage-tag shadow-sm">${m.group?'GROUP '+m.group.split('_')[1]:m.stage.replace('_',' ')}</span><span class="text-[10px] font-black opacity-50 tracking-widest">${new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex items-center justify-between"><div class="flex flex-col items-center w-1/3"><img src="${m.homeTeam?.crest}" class="w-8 h-8 mb-2 object-contain drop-shadow-md"><span class="text-xs font-black uppercase truncate drop-shadow-md">${m.homeTeam?.tla || 'TBD'}</span></div><div class="flex space-x-3 items-center w-1/3 justify-center"><input id="pred-h-${m.id}" type="number" min="0" value="${p?p.h:''}" class="w-12 h-12 bg-white/20 text-center font-black rounded-xl outline-none border border-white/20 shadow-inner text-lg"><span class="opacity-50 font-black text-xl">-</span><input id="pred-a-${m.id}" type="number" min="0" value="${p?p.a:''}" class="w-12 h-12 bg-white/20 text-center font-black rounded-xl outline-none border border-white/20 shadow-inner text-lg"></div><div class="flex flex-col items-center w-1/3"><img src="${m.awayTeam?.crest}" class="w-8 h-8 mb-2 object-contain drop-shadow-md"><span class="text-xs font-black uppercase truncate drop-shadow-md">${m.awayTeam?.tla || 'TBD'}</span></div></div><button id="btn-save-${m.id}" onclick="savePrediction('${m.id}', '${m.homeTeam?.name}', '${m.awayTeam?.name}')" class="w-full mt-6 py-3 gradient-btn font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition shadow-lg">${p ? 'Update Pick' : 'Lock It In 🔒'}</button></div>`;
+        html += `<div class="glass p-6 rounded-3xl shadow-lg border border-white/10 mb-5"><div class="flex justify-between items-center mb-4"><span class="stage-tag shadow-sm">${m.group?'GROUP '+m.group.split('_')[1]:m.stage.replace('_',' ')}</span><span class="text-[10px] font-black opacity-50 tracking-widest">${new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div><div class="flex items-center justify-between"><div class="flex flex-col items-center w-1/3"><img src="${m.homeTeam?.crest}" class="w-8 h-8 mb-2 object-contain drop-shadow-md"><span class="text-xs font-black uppercase truncate drop-shadow-md px-1">${m.homeTeam?.tla || 'TBD'}</span></div><div class="flex space-x-3 items-center w-1/3 justify-center"><input id="pred-h-${m.id}" type="number" min="0" value="${p?p.h:''}" class="w-12 h-12 bg-white/20 text-center font-black rounded-xl outline-none border border-white/20 shadow-inner text-lg"><span class="opacity-50 font-black text-xl">-</span><input id="pred-a-${m.id}" type="number" min="0" value="${p?p.a:''}" class="w-12 h-12 bg-white/20 text-center font-black rounded-xl outline-none border border-white/20 shadow-inner text-lg"></div><div class="flex flex-col items-center w-1/3"><img src="${m.awayTeam?.crest}" class="w-8 h-8 mb-2 object-contain drop-shadow-md"><span class="text-xs font-black uppercase truncate drop-shadow-md px-1">${m.awayTeam?.tla || 'TBD'}</span></div></div><button id="btn-save-${m.id}" onclick="savePrediction('${m.id}', '${m.homeTeam?.name}', '${m.awayTeam?.name}')" class="w-full mt-6 py-3 gradient-btn font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition shadow-lg">${p ? 'Update Pick' : 'Lock It In 🔒'}</button></div>`;
     });
     const past = Object.keys(predictions).filter(id => predictions[id].points !== null).sort((a,b)=>b-a);
     if(past.length) {
         html += `<h3 class="font-black text-sm uppercase opacity-60 mb-3 mt-10 px-2 text-center tracking-widest">The Archive</h3>`;
         past.forEach(id => {
             const p = predictions[id]; const color = p.points >= 5 ? 'emerald' : p.points >= 2 ? 'blue' : 'slate'; const bonus = (p.points > p.basePoints) ? `<span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-[8px] px-1.5 py-0.5 rounded ml-2 font-black shadow-sm">x2</span>` : '';
-            html += `<div class="flex justify-between items-center glass p-4 rounded-2xl mb-3 border-l-4 border-${color}-400"><span class="text-xs font-black w-1/2 truncate drop-shadow-sm">${p.hName} ${p.h}-${p.a} ${p.aName}</span><span class="text-[10px] font-black text-${color}-400 uppercase tracking-widest">+${p.points} PTS ${bonus}</span></div>`;
+            html += `<div class="flex justify-between items-center glass p-4 rounded-2xl mb-3 border-l-4 border-${color}-400"><span class="text-xs font-black w-1/2 truncate drop-shadow-sm pl-1">${p.hName} ${p.h}-${p.a} ${p.aName}</span><span class="text-[10px] font-black text-${color}-400 uppercase tracking-widest">+${p.points} PTS ${bonus}</span></div>`;
         });
     }
     c.innerHTML = html;
 }
 
-function renderStandings(s) { const c = document.getElementById('sub-groups'); if (!s || !s.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">No ESPN Standings data yet.</div>`; c.innerHTML = s.filter(g => g.type === 'TOTAL').map(group => `<div class="glass p-5 rounded-3xl shadow-lg mb-5 border border-white/10"><h3 class="font-black primary-text mb-4 border-b border-white/10 pb-3 text-xs uppercase tracking-widest">${group.group.replace('_',' ')}</h3><div class="space-y-3">${group.table.map(team => `<div class="flex justify-between items-center text-[10px] font-black"><div class="flex items-center gap-3 w-1/2"><span class="opacity-50 w-4 text-center">${team.position}</span><img src="${team.team.crest}" class="w-5 h-5 object-contain drop-shadow-sm"><span class="truncate tracking-wide">${team.team.tla}</span></div><div class="flex gap-4 font-mono opacity-80 w-1/2 justify-end"><span>${team.playedGames}P</span><span class="primary-text text-sm drop-shadow-sm">${team.points}pts</span></div></div>`).join('')}</div></div>`).join(''); }
+function renderStandings(s) { const c = document.getElementById('sub-groups'); if (!s || !s.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">No ESPN Standings data yet.</div>`; c.innerHTML = s.filter(g => g.type === 'TOTAL').map(group => `<div class="glass p-5 rounded-3xl shadow-lg mb-5 border border-white/10"><h3 class="font-black primary-text mb-4 border-b border-white/10 pb-3 text-xs uppercase tracking-widest">${group.group.replace('_',' ')}</h3><div class="space-y-3">${group.table.map(team => `<div class="flex justify-between items-center text-[10px] font-black"><div class="flex items-center gap-3 w-1/2"><span class="opacity-50 w-4 text-center">${team.position}</span><img src="${team.team.crest}" class="w-5 h-5 object-contain drop-shadow-sm"><span class="truncate tracking-wide px-1">${team.team.tla}</span></div><div class="flex gap-4 font-mono opacity-80 w-1/2 justify-end"><span>${team.playedGames}P</span><span class="primary-text text-sm drop-shadow-sm">${team.points}pts</span></div></div>`).join('')}</div></div>`).join(''); }
 function renderScorers(s) { const c = document.getElementById('tab-stats'); c.innerHTML = `<h2 class="text-2xl font-black primary-text mb-6 text-center drop-shadow-md">GOLDEN BOOT</h2><div class="glass p-8 rounded-3xl text-center opacity-50 text-xs font-black uppercase tracking-widest">Mapping Data...</div>`; }
-function renderBracket() { const c = document.getElementById('sub-bracket'); const k = globalMatches.filter(m => m.stage !== 'GROUP_STAGE' && m.stage !== null); if(!k.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">Bracket arriving soon.</div>`; const stages = { 'ROUND_OF_32':[], 'ROUND_OF_16':[], 'QUARTER_FINALS':[], 'SEMI_FINALS':[], 'FINAL':[] }; k.forEach(m => { if(stages[m.stage]) stages[m.stage].push(m); }); let html = `<div class="flex space-x-6 px-4">`; Object.keys(stages).forEach(n => { if(!stages[n].length) return; html += `<div class="flex flex-col space-y-4 min-w-[180px] justify-around"><h4 class="text-center text-[10px] font-black uppercase opacity-60 mb-3 tracking-widest">${n.replace('_',' ')}</h4>`; stages[n].forEach(m => { const hS = m.score.fullTime.home??'-'; const aS = m.score.fullTime.away??'-'; html += `<div class="glass p-3 rounded-2xl text-xs font-black border-l-4 ${m.status==='IN_PLAY'?'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]':'border-white/20'}"><div class="flex justify-between items-center mb-2"><span class="truncate pr-2 drop-shadow-sm">${m.homeTeam?.tla||'TBD'}</span><span class="${hS>aS?'primary-text text-sm':''}">${hS}</span></div><div class="flex justify-between items-center"><span class="truncate pr-2 drop-shadow-sm">${m.awayTeam?.tla||'TBD'}</span><span class="${aS>hS?'primary-text text-sm':''}">${aS}</span></div></div>`; }); html += `</div>`; }); html += `</div>`; c.innerHTML = html; }
+function renderBracket() { const c = document.getElementById('sub-bracket'); const k = globalMatches.filter(m => m.stage !== 'GROUP_STAGE' && m.stage !== null); if(!k.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">Bracket arriving soon.</div>`; const stages = { 'ROUND_OF_32':[], 'ROUND_OF_16':[], 'QUARTER_FINALS':[], 'SEMI_FINALS':[], 'FINAL':[] }; k.forEach(m => { if(stages[m.stage]) stages[m.stage].push(m); }); let html = `<div class="flex space-x-6 px-4">`; Object.keys(stages).forEach(n => { if(!stages[n].length) return; html += `<div class="flex flex-col space-y-4 min-w-[180px] justify-around"><h4 class="text-center text-[10px] font-black uppercase opacity-60 mb-3 tracking-widest">${n.replace('_',' ')}</h4>`; stages[n].forEach(m => { const hS = m.score.fullTime.home??'-'; const aS = m.score.fullTime.away??'-'; html += `<div class="glass p-3 rounded-2xl text-xs font-black border-l-4 ${m.status==='IN_PLAY'?'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]':'border-white/20'}"><div class="flex justify-between items-center mb-2"><span class="truncate pr-2 drop-shadow-sm pl-1">${m.homeTeam?.tla||'TBD'}</span><span class="${hS>aS?'primary-text text-sm':''}">${hS}</span></div><div class="flex justify-between items-center"><span class="truncate pr-2 drop-shadow-sm pl-1">${m.awayTeam?.tla||'TBD'}</span><span class="${aS>hS?'primary-text text-sm':''}">${aS}</span></div></div>`; }); html += `</div>`; }); html += `</div>`; c.innerHTML = html; }
 
 window.updatePWA = () => { triggerHaptic('heavy'); document.getElementById('update-icon').classList.add('animate-spin'); if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistration().then(r => { if (r) r.update().then(() => window.location.reload(true)); else window.location.reload(true); }); } else window.location.reload(true); };
 window.manualSync = async () => { triggerHaptic('heavy'); const i = document.getElementById('sync-icon'); i.classList.add('animate-spin'); await fetchAllData(); setTimeout(() => i.classList.remove('animate-spin'), 800); };
