@@ -3,76 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>World Cup 2026 Elite</title>
+    <title>WC 2026 Fiesta</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f2f2f7" id="theme-meta">
+    <meta name="theme-color" content="#ff0844" id="theme-meta">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --bg: #f2f2f7; --card: #ffffff; --text: #000000; --ios-grey: #e9e9eb; --primary-hex: #10b981; }
-        body.dark-mode { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --ios-grey: #39393d; }
-        body { background-color: var(--bg); color: var(--text); transition: background-color 0.3s ease, color 0.3s ease; min-height: 100vh; overscroll-behavior-y: contain; }
-        .glass { background: var(--card); opacity: 0.95; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--ios-grey); }
-        .tab-content { display: none; animation: fadeIn 0.2s ease-out; }
+        :root {
+            /* 🎉 FIESTA MODE (Default) */
+            --bg-grad-1: #ff0844; --bg-grad-2: #ffb199; --bg-grad-3: #f6d365; --bg-grad-4: #fda085;
+            --card: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text: #1f2937;
+            --ios-grey: rgba(255, 255, 255, 0.5);
+            --primary-hex: #e11d48; 
+        }
+        body.dark-mode { 
+            /* 🌃 MIDNIGHT NEON MODE */
+            --bg-grad-1: #0f172a; --bg-grad-2: #3b0764; --bg-grad-3: #0f172a; --bg-grad-4: #020617;
+            --card: rgba(15, 23, 42, 0.5);
+            --card-border: rgba(34, 211, 238, 0.3);
+            --text: #ffffff;
+            --ios-grey: rgba(0, 0, 0, 0.5);
+            --primary-hex: #22d3ee; 
+        }
+        
+        /* The Moving Liquid Background */
+        body { 
+            background: linear-gradient(-45deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3), var(--bg-grad-4));
+            background-size: 400% 400%;
+            animation: liquidBG 15s ease infinite;
+            color: var(--text); 
+            transition: color 0.3s ease; 
+            min-height: 100vh; 
+            overscroll-behavior-y: contain; 
+        }
+        @keyframes liquidBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* Frosted Glass 2.0 */
+        .glass { 
+            background: var(--card); 
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); 
+            border: 1px solid var(--card-border); 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content { display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .theme-segmented-control { display: flex; background: var(--ios-grey); border-radius: 16px; padding: 4px; width: 100%; margin-top: 10px; }
-        .segment { flex: 1; padding: 12px; border-radius: 12px; border: none; background: transparent; font-weight: 800; color: var(--text); opacity: 0.5; font-size: 14px; cursor: pointer; transition: all 0.2s; }
-        .segment.active { background: var(--card); opacity: 1; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
-        .primary-text { color: var(--primary-hex); }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .theme-segmented-control { display: flex; background: var(--ios-grey); border-radius: 999px; padding: 6px; width: 100%; margin-top: 10px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .segment { flex: 1; padding: 12px; border-radius: 999px; border: none; background: transparent; font-weight: 900; color: var(--text); opacity: 0.6; font-size: 14px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); text-transform: uppercase; letter-spacing: 1px;}
+        .segment.active { background: var(--card); opacity: 1; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transform: scale(1.02); color: var(--primary-hex);}
+        
+        .primary-text { color: var(--primary-hex); text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Playful Micro-interactions */
+        .nav-btn { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .nav-btn:active { transform: scale(0.85); }
+
         .date-header { cursor: pointer; user-select: none; }
-        .date-header svg { transition: transform 0.3s ease; }
+        .date-header svg { transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         .date-header.open svg { transform: rotate(180deg); }
-        .match-drawer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .match-drawer.open { max-height: 2500px; transition: max-height 0.5s ease-in; }
-        .stage-tag { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; background: var(--ios-grey); opacity: 0.8; }
+        .match-drawer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .match-drawer.open { max-height: 2500px; transition: max-height 0.6s ease-in; }
+
+        .stage-tag { font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em; background: var(--text); color: var(--card); opacity: 0.9; }
         .bracket-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 20px; }
+        
+        .gradient-btn { background: linear-gradient(135deg, #f59e0b, #e11d48); color: white; border: none; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4); }
+        body.dark-mode .gradient-btn { background: linear-gradient(135deg, #22d3ee, #ec4899); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4); }
     </style>
 </head>
-<body class="font-sans pb-28 pt-12">
+<body class="font-sans pb-28 pt-8">
     
-    <div id="countdown-banner" class="fixed top-0 w-full bg-blue-600 text-white text-[10px] uppercase tracking-widest font-black text-center py-1 z-30 hidden">Next: <span id="countdown-timer"></span></div>
-    <header class="glass mx-4 p-4 sticky top-8 z-20 shadow-lg flex justify-between items-center rounded-2xl"><h1 class="text-2xl font-black italic tracking-tighter primary-text">WC26</h1><select id="my-team-selector" class="bg-transparent text-xs font-bold border-none outline-none text-right cursor-pointer"><option value="ALL">Global View</option></select></header>
+    <header class="glass mx-4 p-4 sticky top-6 z-20 flex justify-between items-center rounded-full mb-6">
+        <h1 class="text-3xl font-black italic tracking-tighter primary-text ml-2">WC26<span class="text-xl">🎉</span></h1>
+        <select id="my-team-selector" class="bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-xs font-black border-none outline-none text-right cursor-pointer uppercase shadow-inner"></select>
+    </header>
 
     <main class="p-4 max-w-lg mx-auto">
         <div id="tab-matches" class="tab-content active space-y-4"></div>
+        
         <div id="tab-groups" class="tab-content space-y-4">
-            <div class="theme-segmented-control mb-4"><button id="btnSubGroups" class="segment active" onclick="switchSubTab('groups')">Groups</button><button id="btnSubBracket" class="segment" onclick="switchSubTab('bracket')">Knockouts</button></div>
+            <div class="theme-segmented-control mb-6"><button id="btnSubGroups" class="segment active" onclick="switchSubTab('groups')">Groups</button><button id="btnSubBracket" class="segment" onclick="switchSubTab('bracket')">Knockouts</button></div>
             <div id="sub-groups" class="space-y-6"></div><div id="sub-bracket" class="hidden bracket-scroll space-y-4"></div>
         </div>
+
         <div id="tab-predict" class="tab-content space-y-4">
             <div class="theme-segmented-control mb-6"><button id="btnSubPicks" class="segment active" onclick="switchPredictTab('picks')">My Picks</button><button id="btnSubLeague" class="segment" onclick="switchPredictTab('league')">League</button></div>
             <div id="sub-picks" class="space-y-4">
-                <div class="glass p-6 rounded-2xl shadow-md text-center mb-6 relative overflow-hidden"><h2 class="text-xs font-black uppercase opacity-50 tracking-widest mb-1">Your Total Points</h2><div class="text-5xl font-black primary-text mb-2"><span id="predict-points">0</span></div><p class="text-[10px] font-bold opacity-50 uppercase leading-relaxed"><span class="text-emerald-500 font-black">5pts</span> Exact Score | <span class="text-blue-500 font-black">2pts</span> Result<br>🔥 DOUBLE PTS for a Perfect Group!</p></div>
-                <h3 class="font-black text-sm uppercase opacity-50 mb-2 px-2">Upcoming Matches</h3><div id="predict-container" class="space-y-4"></div>
+                <div class="glass p-8 rounded-3xl text-center mb-6 relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
+                    <h2 class="text-xs font-black uppercase opacity-60 tracking-widest mb-2">Total Party Points</h2>
+                    <div class="text-7xl font-black primary-text mb-3 drop-shadow-xl"><span id="predict-points">0</span></div>
+                    <p class="text-[10px] font-black opacity-60 uppercase leading-relaxed tracking-widest">
+                        5pts Exact | 2pts Result<br>🔥 DOUBLE PTS for Perfect Group!
+                    </p>
+                </div>
+                <div id="predict-container" class="space-y-4"></div>
             </div>
             <div id="sub-league" class="hidden space-y-4">
-                <div id="league-setup" class="glass p-6 rounded-2xl shadow-md text-center"><h2 class="text-lg font-black primary-text mb-2">Join a League</h2><p class="text-xs opacity-60 mb-6 font-bold">Compete against your friends!</p><input id="setup-username" type="text" placeholder="Your Display Name" class="w-full bg-black/5 rounded-xl p-4 mb-4 text-sm font-bold outline-none border border-black/5 text-center"><input id="setup-league-id" type="text" placeholder="Secret League ID" class="w-full bg-black/5 rounded-xl p-4 mb-6 text-sm font-bold outline-none border border-black/5 text-center lowercase"><button onclick="joinLeague()" class="w-full py-4 bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-widest active:scale-95 transition shadow-lg">Join League</button></div>
-                <div id="league-board" class="hidden"><div class="flex justify-between items-end mb-4 px-2 border-b border-black/10 pb-2"><div><h2 class="text-lg font-black primary-text leading-tight">Leaderboard</h2><p class="text-[10px] font-bold opacity-50 uppercase">League: <span id="display-league-id" class="primary-text"></span></p></div><button onclick="leaveLeague()" class="text-[10px] text-red-500 font-bold uppercase tracking-widest opacity-80">Leave</button></div><div id="league-rankings" class="glass rounded-2xl shadow-md overflow-hidden"></div></div>
+                <div id="league-setup" class="glass p-8 rounded-3xl text-center">
+                    <h2 class="text-2xl font-black primary-text mb-2">Join the Party</h2>
+                    <p class="text-xs opacity-70 mb-8 font-black uppercase tracking-widest">Compete against your friends</p>
+                    <input id="setup-username" type="text" placeholder="Your Display Name" class="w-full bg-white/20 backdrop-blur-sm rounded-2xl p-4 mb-4 text-sm font-black outline-none border border-white/30 text-center shadow-inner placeholder:text-current placeholder:opacity-50">
+                    <input id="setup-league-id" type="text" placeholder="Secret League ID" class="w-full bg-white/20 backdrop-blur-sm rounded-2xl p-4 mb-8 text-sm font-black outline-none border border-white/30 text-center lowercase shadow-inner placeholder:text-current placeholder:opacity-50">
+                    <button onclick="joinLeague()" class="w-full py-5 gradient-btn rounded-2xl text-sm font-black uppercase tracking-widest active:scale-95 transition">Enter League 🚀</button>
+                </div>
+                <div id="league-board" class="hidden">
+                    <div class="flex justify-between items-end mb-4 px-2 border-b border-black/10 pb-2">
+                        <div><h2 class="text-xl font-black primary-text leading-tight">Leaderboard</h2><p class="text-[10px] font-black opacity-60 uppercase tracking-widest">League: <span id="display-league-id" class="primary-text"></span></p></div>
+                        <button onclick="leaveLeague()" class="text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 pb-1">Leave Party</button>
+                    </div>
+                    <div id="league-rankings" class="glass rounded-3xl overflow-hidden"></div>
+                </div>
             </div>
         </div>
+
         <div id="tab-stats" class="tab-content space-y-4"></div>
+
         <div id="tab-settings" class="tab-content space-y-6">
-            <h2 class="text-xl font-black primary-text text-center text-emerald-500">Settings</h2>
-            <div class="glass p-5 rounded-2xl shadow-md"><span class="text-sm font-black uppercase opacity-50 block text-center mb-2">Appearance</span><div class="theme-segmented-control"><button id="btnLight" class="segment active" onclick="window.setThemeMode(false)">☀️ Light</button><button id="btnDark" class="segment" onclick="window.setThemeMode(true)">🌙 Dark</button></div></div>
-            <div class="glass p-5 rounded-2xl shadow-md space-y-4">
-                <span class="text-sm font-black uppercase opacity-50 block text-center">System & API (ESPN)</span>
-                <button onclick="manualSync()" id="sync-btn" class="w-full py-4 bg-emerald-500/10 text-emerald-500 rounded-xl text-sm font-black uppercase flex justify-center items-center gap-3"><svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Sync Live Data</button>
-                <button onclick="updatePWA()" id="update-btn" class="w-full py-4 bg-blue-500/10 text-blue-500 rounded-xl text-sm font-black uppercase flex justify-center items-center gap-3"><svg id="update-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Update App Version</button>
-                <div class="flex justify-between items-center text-sm px-1 pt-2 border-t border-black/5 mt-2"><span>API Status</span><span id="api-indicator" class="w-3 h-3 rounded-full bg-emerald-500 shadow-lg"></span></div>
-                <div class="flex justify-between items-center text-sm px-1"><span>Auto-Refresh</span><select id="refresh-rate" class="bg-transparent font-bold outline-none"><option value="30000">30s</option><option value="60000">1m</option><option value="300000">5m</option></select></div>
-                <button onclick="nukeCache()" class="w-full py-3 mt-4 bg-red-500/5 text-red-500/50 rounded-xl text-[10px] font-black uppercase">Reset App Cache</button>
+            <h2 class="text-2xl font-black primary-text text-center mb-6 drop-shadow-md">The DJ Booth</h2>
+            <div class="glass p-6 rounded-3xl mb-6">
+                <span class="text-xs font-black uppercase opacity-60 block text-center mb-4 tracking-widest">Select Your Vibe</span>
+                <div class="theme-segmented-control"><button id="btnLight" class="segment active" onclick="window.setThemeMode(false)">🎉 Fiesta</button><button id="btnDark" class="segment" onclick="window.setThemeMode(true)">🌃 Neon</button></div>
             </div>
-            <div class="text-center text-[10px] opacity-30 font-bold uppercase">World Cup 2026 PWA v11.0.0 (ESPN Engine)</div>
+            <div class="glass p-6 rounded-3xl space-y-4">
+                <span class="text-xs font-black uppercase opacity-60 block text-center tracking-widest mb-4">System Controls</span>
+                <button onclick="manualSync()" id="sync-btn" class="w-full py-4 bg-white/20 rounded-2xl text-xs font-black uppercase flex justify-center items-center gap-3 active:scale-95 transition border border-white/20 shadow-sm"><svg id="sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Sync Live Data</button>
+                <button onclick="updatePWA()" id="update-btn" class="w-full py-4 bg-white/20 rounded-2xl text-xs font-black uppercase flex justify-center items-center gap-3 active:scale-95 transition border border-white/20 shadow-sm"><svg id="update-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Update App Version</button>
+                <div class="flex justify-between items-center text-xs px-2 pt-4 border-t border-black/10 mt-4 font-black uppercase tracking-widest opacity-70"><span>API Status</span><span id="api-indicator" class="w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.8)]"></span></div>
+                <div class="flex justify-between items-center text-xs px-2 font-black uppercase tracking-widest opacity-70"><span>Auto-Refresh</span><select id="refresh-rate" class="bg-transparent font-black outline-none"><option value="30000">30s</option><option value="60000">1m</option><option value="300000">5m</option></select></div>
+                <button onclick="nukeCache()" class="w-full py-4 mt-6 bg-black/10 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition text-red-500">Reset App Cache</button>
+            </div>
+            <div class="text-center text-[10px] opacity-40 font-black uppercase tracking-widest">World Cup 2026 PWA v12.0.0</div>
         </div>
     </main>
 
-    <nav class="fixed bottom-6 left-4 right-4 glass rounded-3xl flex justify-around p-2 shadow-2xl z-30">
-        <button onclick="switchTab('matches')" id="btn-matches" class="flex flex-col items-center py-2 px-3 primary-text"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Match</span></button>
-        <button onclick="switchTab('groups')" id="btn-groups" class="flex flex-col items-center py-2 px-3 opacity-40"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Table</span></button>
-        <button onclick="switchTab('predict')" id="btn-predict" class="flex flex-col items-center py-2 px-3 opacity-40"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Play</span></button>
-        <button onclick="switchTab('stats')" id="btn-stats" class="flex flex-col items-center py-2 px-3 opacity-40"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Stats</span></button>
-        <button onclick="switchTab('settings')" id="btn-settings" class="flex flex-col items-center py-2 px-3 opacity-40"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="text-[8px] font-black uppercase tracking-widest">Settings</span></button>
+    <nav class="fixed bottom-6 left-4 right-4 glass rounded-full flex justify-around p-3 shadow-2xl z-30 border border-white/30 backdrop-blur-xl">
+        <button onclick="switchTab('matches')" id="btn-matches" class="nav-btn flex flex-col items-center p-2 primary-text w-1/5"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Match</span></button>
+        <button onclick="switchTab('groups')" id="btn-groups" class="nav-btn flex flex-col items-center p-2 opacity-50 w-1/5"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Table</span></button>
+        <button onclick="switchTab('predict')" id="btn-predict" class="nav-btn flex flex-col items-center p-2 opacity-50 w-1/5"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Play</span></button>
+        <button onclick="switchTab('stats')" id="btn-stats" class="nav-btn flex flex-col items-center p-2 opacity-50 w-1/5"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span class="text-[8px] font-black uppercase tracking-widest">Stats</span></button>
+        <button onclick="switchTab('settings')" id="btn-settings" class="nav-btn flex flex-col items-center p-2 opacity-50 w-1/5"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg><span class="text-[8px] font-black uppercase tracking-widest">DJ</span></button>
     </nav>
     <script src="app.js"></script>
 </body>
