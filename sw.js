@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wc2026-v10.0';
+const CACHE_NAME = 'wc2026-v11.0';
 const ASSETS = [
     './',
     './index.html',
@@ -17,6 +17,6 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET' || event.request.url.includes('workers.dev')) return;
+    if (event.request.method !== 'GET' || event.request.url.includes('workers.dev') || event.request.url.includes('espn.com')) return;
     event.respondWith(caches.match(event.request).then(res => res || fetch(event.request)));
 });
