@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wc2026-v12.1';
+const CACHE_NAME = 'wc2026-v12.3';
 const ASSETS = [
     './',
     './index.html',
