@@ -84,6 +84,7 @@ function getWinProb(h, a) {
 async function fetchAllData() {
     clearTimeout(fetchTimeout); const ind = document.getElementById('api-indicator');
     try {
+        // 1. Fetch ESPN Matches
         const mRes = await fetch(ESPN_MATCHES_URL); const mData = await mRes.json();
         globalMatches = mData.events.map(e => {
             const comp = e.competitions[0];
@@ -96,6 +97,7 @@ async function fetchAllData() {
             return { id: e.id, utcDate: e.date, status: status, stage: stage, group: group, venue: comp.venue?.fullName || 'Stadium TBD', homeTeam: { name: home.team.displayName, tla: home.team.abbreviation, crest: home.team.logo }, awayTeam: { name: away.team.displayName, tla: away.team.abbreviation, crest: away.team.logo }, score: { fullTime: { home: parseInt(home.score)||0, away: parseInt(away.score)||0 } } };
         });
 
+        // 2. Fetch ESPN Standings
         let parsedStandings = [];
         try {
             const stRes = await fetch(ESPN_STANDINGS_URL); const stData = await stRes.json();
@@ -104,8 +106,20 @@ async function fetchAllData() {
             }
         } catch(e) {}
 
+        // 3. Fetch Top Scorers via Cloudflare Proxy (V12.3 Hybrid Fix)
+        let parsedScorers = [];
+        try {
+            const scRes = await fetch(`${CF_API_URL}?endpoint=scorers`);
+            const scData = await scRes.json();
+            parsedScorers = scData.scorers || [];
+        } catch(e) { console.log("Scorers fetch bypassed or failed"); }
+
         checkGoalAlerts(globalMatches); evalPredictions(); if(myLeagueId) fetchLeagueTable();
-        renderMatches(); renderPredictor(); renderStandings(parsedStandings); renderBracket(); renderScorers([]); populateTeamSelector();
+        
+        renderMatches(); renderPredictor(); renderStandings(parsedStandings); renderBracket(); 
+        renderScorers(parsedScorers); // Feed it into the engine!
+        populateTeamSelector();
+
         ind.className = "w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.8)]";
     } catch (e) { ind.className = "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"; }
     fetchTimeout = setTimeout(fetchAllData, refreshInterval);
@@ -187,7 +201,6 @@ async function fetchLeagueTable() {
 window.toggleDateGroup = (dateId) => { triggerHaptic('light'); document.getElementById(`header-${dateId}`).classList.toggle('open'); document.getElementById(`drawer-${dateId}`).classList.toggle('open'); };
 function getTvBadge(h, a) { const channel = UK_TV_GUIDE[`${h}-${a}`] || UK_TV_GUIDE[`${a}-${h}`]; if (!channel) return ''; const style = channel === "BBC" ? "bg-black text-white" : "bg-blue-900 text-cyan-300 border-cyan-300/30"; return `<span class="${style} px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest ml-2 border border-white/10 shadow-sm">${channel}</span>`; }
 
-// --- RENDER MATCHES (V12.2 Typo Fix - Added pl-2 to left container) ---
 function renderMatches() {
     const container = document.getElementById('tab-matches');
     let list = savedTeam === 'ALL' ? globalMatches : globalMatches.filter(m => m.homeTeam?.name === savedTeam || m.awayTeam?.name === savedTeam);
@@ -260,7 +273,27 @@ function renderPredictor() {
 }
 
 function renderStandings(s) { const c = document.getElementById('sub-groups'); if (!s || !s.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">No ESPN Standings data yet.</div>`; c.innerHTML = s.filter(g => g.type === 'TOTAL').map(group => `<div class="glass p-5 rounded-3xl shadow-lg mb-5 border border-white/10"><h3 class="font-black primary-text mb-4 border-b border-white/10 pb-3 text-xs uppercase tracking-widest">${group.group.replace('_',' ')}</h3><div class="space-y-3">${group.table.map(team => `<div class="flex justify-between items-center text-[10px] font-black"><div class="flex items-center gap-3 w-1/2"><span class="opacity-50 w-4 text-center">${team.position}</span><img src="${team.team.crest}" class="w-5 h-5 object-contain drop-shadow-sm"><span class="truncate tracking-wide px-1">${team.team.tla}</span></div><div class="flex gap-4 font-mono opacity-80 w-1/2 justify-end"><span>${team.playedGames}P</span><span class="primary-text text-sm drop-shadow-sm">${team.points}pts</span></div></div>`).join('')}</div></div>`).join(''); }
-function renderScorers(s) { const c = document.getElementById('tab-stats'); c.innerHTML = `<h2 class="text-2xl font-black primary-text mb-6 text-center drop-shadow-md">GOLDEN BOOT</h2><div class="glass p-8 rounded-3xl text-center opacity-50 text-xs font-black uppercase tracking-widest">Mapping Data...</div>`; }
+
+// --- V12.3: GOLDEN BOOT RENDERER (Hybrid Fix) ---
+function renderScorers(s) { 
+    const c = document.getElementById('tab-stats'); 
+    if (!s || !s.length) return c.innerHTML = `<h2 class="text-2xl font-black primary-text mb-6 text-center drop-shadow-md">GOLDEN BOOT</h2><div class="glass p-8 rounded-3xl text-center opacity-50 text-xs font-black uppercase tracking-widest">Awaiting First Goal...</div>`; 
+    
+    c.innerHTML = `<h2 class="text-2xl font-black primary-text mb-6 text-center drop-shadow-md">GOLDEN BOOT</h2><div class="glass p-4 rounded-3xl shadow-lg border border-white/10">` + 
+    s.map((player, i) => `
+        <div class="flex justify-between items-center py-4 px-2 border-b border-white/10 last:border-0">
+            <div class="flex items-center gap-4">
+                <span class="opacity-50 text-xs font-black w-4 text-center">${i+1}</span>
+                <div class="flex flex-col">
+                    <span class="font-black text-sm tracking-wide drop-shadow-sm">${player.player.name}</span>
+                    <span class="text-[9px] font-black uppercase tracking-widest opacity-60">${player.team.name}</span>
+                </div>
+            </div>
+            <span class="font-black text-xl primary-text drop-shadow-md">${player.goals} ⚽</span>
+        </div>
+    `).join('') + `</div>`;
+}
+
 function renderBracket() { const c = document.getElementById('sub-bracket'); const k = globalMatches.filter(m => m.stage !== 'GROUP_STAGE' && m.stage !== null); if(!k.length) return c.innerHTML = `<div class="text-center py-20 opacity-40 font-black uppercase tracking-widest text-[10px]">Bracket arriving soon.</div>`; const stages = { 'ROUND_OF_32':[], 'ROUND_OF_16':[], 'QUARTER_FINALS':[], 'SEMI_FINALS':[], 'FINAL':[] }; k.forEach(m => { if(stages[m.stage]) stages[m.stage].push(m); }); let html = `<div class="flex space-x-6 px-4">`; Object.keys(stages).forEach(n => { if(!stages[n].length) return; html += `<div class="flex flex-col space-y-4 min-w-[180px] justify-around"><h4 class="text-center text-[10px] font-black uppercase opacity-60 mb-3 tracking-widest">${n.replace('_',' ')}</h4>`; stages[n].forEach(m => { const hS = m.score.fullTime.home??'-'; const aS = m.score.fullTime.away??'-'; html += `<div class="glass p-3 rounded-2xl text-xs font-black border-l-4 ${m.status==='IN_PLAY'?'border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]':'border-white/20'}"><div class="flex justify-between items-center mb-2"><span class="truncate pr-2 drop-shadow-sm pl-1">${m.homeTeam?.tla||'TBD'}</span><span class="${hS>aS?'primary-text text-sm':''}">${hS}</span></div><div class="flex justify-between items-center"><span class="truncate pr-2 drop-shadow-sm pl-1">${m.awayTeam?.tla||'TBD'}</span><span class="${aS>hS?'primary-text text-sm':''}">${aS}</span></div></div>`; }); html += `</div>`; }); html += `</div>`; c.innerHTML = html; }
 
 window.updatePWA = () => { triggerHaptic('heavy'); document.getElementById('update-icon').classList.add('animate-spin'); if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistration().then(r => { if (r) r.update().then(() => window.location.reload(true)); else window.location.reload(true); }); } else window.location.reload(true); };
