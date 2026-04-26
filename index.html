@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>WC 2026 Fiesta</title>
+    <title>WC 2026 Elite</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff0844" id="theme-meta">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,7 +28,6 @@
             --primary-hex: #22d3ee; 
         }
         
-        /* The Moving Liquid Background */
         body { 
             background: linear-gradient(-45deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3), var(--bg-grad-4));
             background-size: 400% 400%;
@@ -40,7 +39,6 @@
         }
         @keyframes liquidBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* Frosted Glass 2.0 */
         .glass { 
             background: var(--card); 
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); 
@@ -58,7 +56,6 @@
         
         .primary-text { color: var(--primary-hex); text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        /* Playful Micro-interactions */
         .nav-btn { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-btn:active { transform: scale(0.85); }
 
@@ -77,9 +74,14 @@
 </head>
 <body class="font-sans pb-28 pt-8">
     
-    <header class="glass mx-4 p-4 sticky top-6 z-20 flex justify-between items-center rounded-full mb-6">
-        <h1 class="text-3xl font-black italic tracking-tighter primary-text ml-2">WC26<span class="text-xl">🎉</span></h1>
-        <select id="my-team-selector" class="bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-xs font-black border-none outline-none text-right cursor-pointer uppercase shadow-inner"></select>
+    <header class="glass mx-4 p-3 sticky top-6 z-20 flex justify-between items-center rounded-full mb-6">
+        <div class="flex items-center ml-2">
+            <svg class="w-7 h-7 mr-2 primary-text drop-shadow-md" fill="currentColor" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                <path d="M232,80a24.0275,24.0275,0,0,0-24-24H200V40a16.01833,16.01833,0,0,0-16-16H72A16.01833,16.01833,0,0,0,56,40V56H48A24.0275,24.0275,0,0,0,24,80c0,29.91406,17.416,56.12695,44.20117,68.99121A71.93325,71.93325,0,0,0,120,183.47363V208H88a8,8,0,0,0,0,16h80a8,8,0,0,0,0-16H136V183.47363a71.93325,71.93325,0,0,0,51.79883-34.48242C214.584,136.12695,232,109.91406,232,80ZM40,80a8.00917,8.00917,0,0,1,8-8h8v59.39062A87.21443,87.21443,0,0,1,40,80Zm88,88a56.06353,56.06353,0,0,1-56-56V40H184v72A56.06353,56.06353,0,0,1,128,168Zm80-88c0,20.4707-8.15625,39.69922-22.36133,52.92383A87.05063,87.05063,0,0,1,200,131.39062V72h8A8.00917,8.00917,0,0,1,208,80Z"></path>
+            </svg>
+            <h1 class="text-3xl font-black italic tracking-tighter primary-text drop-shadow-md">WC26</h1>
+        </div>
+        <select id="my-team-selector" class="bg-white/20 backdrop-blur-md rounded-full px-3 py-2 text-xs font-black border-none outline-none text-right cursor-pointer uppercase shadow-inner max-w-[130px] sm:max-w-[160px] truncate flex-shrink-0"></select>
     </header>
 
     <main class="p-4 max-w-lg mx-auto">
@@ -96,7 +98,7 @@
                 <div class="glass p-8 rounded-3xl text-center mb-6 relative overflow-hidden">
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
                     <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-                    <h2 class="text-xs font-black uppercase opacity-60 tracking-widest mb-2">Total Party Points</h2>
+                    <h2 class="text-xs font-black uppercase opacity-60 tracking-widest mb-2">Total Points</h2>
                     <div class="text-7xl font-black primary-text mb-3 drop-shadow-xl"><span id="predict-points">0</span></div>
                     <p class="text-[10px] font-black opacity-60 uppercase leading-relaxed tracking-widest">
                         5pts Exact | 2pts Result<br>🔥 DOUBLE PTS for Perfect Group!
@@ -138,7 +140,7 @@
                 <div class="flex justify-between items-center text-xs px-2 font-black uppercase tracking-widest opacity-70"><span>Auto-Refresh</span><select id="refresh-rate" class="bg-transparent font-black outline-none"><option value="30000">30s</option><option value="60000">1m</option><option value="300000">5m</option></select></div>
                 <button onclick="nukeCache()" class="w-full py-4 mt-6 bg-black/10 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition text-red-500">Reset App Cache</button>
             </div>
-            <div class="text-center text-[10px] opacity-40 font-black uppercase tracking-widest">World Cup 2026 PWA v12.0.0</div>
+            <div class="text-center text-[10px] opacity-40 font-black uppercase tracking-widest">World Cup 2026 PWA v12.1.0</div>
         </div>
     </main>
 
