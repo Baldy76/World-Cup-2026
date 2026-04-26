@@ -2,7 +2,39 @@ const CF_API_URL = 'https://wc2026-proxy.baldynapperrwe.workers.dev';
 const ESPN_MATCHES_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260601-20260731&limit=200';
 const ESPN_STANDINGS_URL = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
 
-const UK_TV_GUIDE = { "Mexico-South Africa": "ITV", "USA-Paraguay": "BBC", "England-Croatia": "ITV", "England-Ghana": "BBC", "Panama-England": "ITV", "Scotland-Haiti": "BBC", "Scotland-Morocco": "ITV", "Scotland-Brazil": "BBC" };
+// --- COMPLETE GROUP STAGE UK TV BROADCAST GUIDE ---
+const UK_TV_GUIDE = {
+    // Matchday 1
+    "Mexico-South Africa": "ITV", "South Korea-Play-off D": "ITV", "Canada-Play-off A": "BBC",
+    "USA-Paraguay": "BBC", "Qatar-Switzerland": "ITV", "Brazil-Morocco": "BBC",
+    "Australia-Play-off C": "ITV", "Scotland-Haiti": "BBC", "Germany-Curacao": "ITV",
+    "Netherlands-Japan": "ITV", "Play-off B-Tunisia": "ITV", "Ivory Coast-Ecuador": "BBC",
+    "Spain-Cape Verde": "ITV", "Belgium-Egypt": "BBC", "Saudi Arabia-Uruguay": "ITV",
+    "Iran-New Zealand": "BBC", "France-Senegal": "BBC", "Play-off 2-Norway": "BBC",
+    "Argentina-Algeria": "ITV", "Austria-Jordan": "BBC", "Portugal-Play-off 1": "BBC",
+    "England-Croatia": "ITV", "Ghana-Panama": "ITV",
+
+    // Matchday 2
+    "Uzbekistan-Colombia": "BBC", "South Africa-Play-off D": "BBC", "Play-off A-Switzerland": "ITV",
+    "Canada-Qatar": "ITV", "Mexico-South Korea": "BBC", "USA-Australia": "BBC",
+    "Scotland-Morocco": "ITV", "Paraguay-Play-off C": "ITV", "Brazil-Haiti": "ITV",
+    "Netherlands-Play-off B": "BBC", "Germany-Ivory Coast": "ITV", "Japan-Tunisia": "BBC",
+    "Curacao-Ecuador": "BBC", "Spain-Saudi Arabia": "BBC", "Belgium-Iran": "ITV",
+    "Cape Verde-Uruguay": "BBC", "Egypt-New Zealand": "ITV", "Argentina-Austria": "BBC",
+    "France-Play-off 2": "BBC", "Senegal-Norway": "ITV", "Algeria-Jordan": "ITV",
+    "Portugal-Uzbekistan": "ITV", "England-Ghana": "BBC", "Croatia-Panama": "BBC",
+
+    // Matchday 3
+    "Colombia-Play-off 1": "ITV", "Canada-Switzerland": "ITV", "Play-off A-Qatar": "ITV",
+    "Scotland-Brazil": "BBC", "Morocco-Haiti": "BBC", "Mexico-Play-off D": "BBC",
+    "South Africa-South Korea": "BBC", "Germany-Ecuador": "BBC", "Curacao-Ivory Coast": "BBC",
+    "USA-Play-off C": "ITV", "Paraguay-Australia": "ITV", "Japan-Play-off B": "BBC",
+    "Netherlands-Tunisia": "BBC", "France-Norway": "ITV", "Senegal-Play-off 2": "ITV",
+    "Cape Verde-Saudi Arabia": "ITV", "Uruguay-Spain": "ITV", "Egypt-Iran": "BBC",
+    "New Zealand-Belgium": "BBC", "England-Panama": "ITV", "Croatia-Ghana": "ITV",
+    "Algeria-Austria": "BBC", "Argentina-Jordan": "BBC", "Colombia-Portugal": "BBC",
+    "Play-off 1-Uzbekistan": "BBC"
+};
 
 let globalMatches = [];
 let savedTeam = localStorage.getItem('myTeam') || 'ALL';
